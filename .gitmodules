@@ -1,3 +1,13 @@
 [submodule "Vendors/NearbyProtocols"]
 	path = Vendors/NearbyProtocols
 	url = https://github.com/PatchByte/NearbyProtocols.git
+[submodule "Vendors/glfw"]
+	path = Vendors/glfw
+	url = https://github.com/glfw/glfw.git
+[submodule "Vendors/Ash"]
+	path = Vendors/Ash
+	url = https://github.com/PatchByte/Ash.git
+[submodule "Vendors/imgui"]
+	path = Vendors/imgui
+	url = https://github.com/ocornut/imgui.git
+	branch = docking
