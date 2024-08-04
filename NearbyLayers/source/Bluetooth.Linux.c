@@ -93,7 +93,7 @@ void nearby_layer_bluetooth_thread(nearby_layer_bluetooth_t* instance)
     le_set_scan_parameters_cp ble_scan_parameters;
     zero_memory(ble_scan_parameters);
 
-    ble_scan_parameters.type = 0x00;
+    ble_scan_parameters.type = 0x01;
     ble_scan_parameters.interval = htobs(0x0010);
     ble_scan_parameters.window = htobs(0x0010);
     ble_scan_parameters.own_bdaddr_type = LE_PUBLIC_ADDRESS; // Public Device Address (default).
@@ -184,7 +184,29 @@ void nearby_layer_bluetooth_thread(nearby_layer_bluetooth_t* instance)
                         le_advertising_info* current_advertising_info = (le_advertising_info*)current_advertising_report_position;
                         char addr[18];
                         ba2str(&(current_advertising_info->bdaddr), addr);
-                        printf("%s - RSSI %d\n", addr, (char)current_advertising_info->data[current_advertising_info->length]);
+
+                        int current_advertising_info_iterator_index = 0;
+                        while (current_advertising_info_iterator_index < current_advertising_info->length)
+                        {
+                            uint8_t current_service_data_length = current_advertising_info->data[current_advertising_info_iterator_index++];
+                            if (current_service_data_length == 0)
+                                break;
+                            uint8_t current_service_data_type = current_advertising_info->data[current_advertising_info_iterator_index];
+
+                            // Print service data (type 0x16 for 16-bit UUID, 0x20 for 32-bit UUID, 0x21 for 128-bit UUID)
+                            if (current_service_data_type == 0x16 || current_service_data_type == 0x20 || current_service_data_type == 0x21)
+                            {
+                                printf("Service Data (Type %02x) (Size %02x): ", current_service_data_type, current_service_data_length);
+                                for (int current_service_data_index = current_advertising_info_iterator_index + 1; current_service_data_index < current_advertising_info_iterator_index + current_service_data_length; ++current_service_data_index)
+                                {
+                                    printf("%02x ", current_advertising_info->data[current_service_data_index]);
+                                }
+                                printf("\n");
+                            }
+
+                            current_advertising_info_iterator_index += current_service_data_length;
+                        }
+
                         current_advertising_report_position = current_advertising_info->data + current_advertising_info->length + 2;
                     }
                 }
