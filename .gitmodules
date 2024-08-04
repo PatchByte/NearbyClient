@@ -11,3 +11,6 @@
 	path = Vendors/imgui
 	url = https://github.com/ocornut/imgui.git
 	branch = docking
+[submodule "Vendors/fmt"]
+	path = Vendors/fmt
+	url = https://github.com/fmtlib/fmt.git

@@ -1,5 +1,5 @@
 #include "NearbyClient/Main.hpp"
-#include "NearbyClient/NearbyClient.hpp"
+#include "NearbyClient/Client.hpp"
 
 int main(int ArgCount, char** ArgVector)
 {
