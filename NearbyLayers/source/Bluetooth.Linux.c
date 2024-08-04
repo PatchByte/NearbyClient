@@ -197,7 +197,8 @@ void nearby_layer_bluetooth_thread(nearby_layer_bluetooth_t* instance)
                             if (current_service_data_type == 0x16 || current_service_data_type == 0x20 || current_service_data_type == 0x21)
                             {
                                 printf("Service Data (Type %02x) (Size %02x): ", current_service_data_type, current_service_data_length);
-                                for (int current_service_data_index = current_advertising_info_iterator_index + 1; current_service_data_index < current_advertising_info_iterator_index + current_service_data_length; ++current_service_data_index)
+                                for (int current_service_data_index = current_advertising_info_iterator_index + 1;
+                                     current_service_data_index < current_advertising_info_iterator_index + current_service_data_length; ++current_service_data_index)
                                 {
                                     printf("%02x ", current_advertising_info->data[current_service_data_index]);
                                 }
