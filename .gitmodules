@@ -1,0 +1,3 @@
+[submodule "Vendors/NearbyProtocols"]
+	path = Vendors/NearbyProtocols
+	url = https://github.com/PatchByte/NearbyProtocols.git
