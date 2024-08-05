@@ -1,4 +1,4 @@
-#include "NearbyClient/Discovered.hpp"
+#include "NearbyClient/DiscoveredAdvertisements.hpp"
 #include "NearbyProtocols/ConnectionAdvertisement.h"
 #include "NearbyProtocols/MediumAdvertisement.h"
 #include "NearbyProtocols/ShareAdvertisement.h"
@@ -8,7 +8,7 @@
 namespace nearby::client
 {
 
-    NearbyBleDiscoveredAdvertisement::NearbyBleDiscoveredAdvertisement()
+    NearbyDiscoveredAdvertisementBle::NearbyDiscoveredAdvertisementBle()
         : m_Medium(new nearby_medium_advertisement_ble()), m_Connection(new nearby_connection_advertisement_ble()), m_Share(new nearby_share_advertisement())
     {
         memset(m_Medium, 0, sizeof(*m_Medium));
@@ -16,12 +16,12 @@ namespace nearby::client
         memset(m_Share, 0, sizeof(*m_Share));
     }
 
-    NearbyBleDiscoveredAdvertisement::~NearbyBleDiscoveredAdvertisement()
+    NearbyDiscoveredAdvertisementBle::~NearbyDiscoveredAdvertisementBle()
     {
         this->Reset();
     }
 
-    bool NearbyBleDiscoveredAdvertisement::Deserialize(void* AdvertisementData, size_t AdvertisementLength)
+    bool NearbyDiscoveredAdvertisementBle::Deserialize(void* AdvertisementData, size_t AdvertisementLength)
     {
         this->Reset();
 
@@ -57,7 +57,7 @@ namespace nearby::client
         return true;
     }
 
-    bool NearbyBleDiscoveredAdvertisement::Reset()
+    bool NearbyDiscoveredAdvertisementBle::Reset()
     {
         if (m_Share)
         {

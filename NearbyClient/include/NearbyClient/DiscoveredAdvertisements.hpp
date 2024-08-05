@@ -8,11 +8,11 @@
 
 namespace nearby::client
 {
-    class NearbyBleDiscoveredAdvertisement
+    class NearbyDiscoveredAdvertisementBle
     {
     public:
-        NearbyBleDiscoveredAdvertisement();
-        ~NearbyBleDiscoveredAdvertisement();
+        NearbyDiscoveredAdvertisementBle();
+        ~NearbyDiscoveredAdvertisementBle();
 
         bool Deserialize(void* AdvertisementData, size_t AdvertisementLength);
         bool Reset();
@@ -37,11 +37,7 @@ namespace nearby::client
         nearby_share_advertisement* m_Share;
     };
 
-    class NearbyDiscoveredEndpoint
-    {
-    public:
-        unsigned char m_MacAddress[6];
-    };
+
 
 } // namespace nearby::client
 
