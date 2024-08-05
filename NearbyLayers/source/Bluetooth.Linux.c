@@ -11,6 +11,8 @@
 #include <bluetooth/hci.h>
 #include <bluetooth/hci_lib.h>
 
+#define NEARBY_SHARE_ADVERTISEMENT_UUID 0xfef3
+
 // useful helpers
 
 #define zero_memory(x) memset(&x, 0, sizeof(x));
@@ -37,6 +39,7 @@ struct nearby_layer_bluetooth
     pthread_t scanning_thread;
     bool scanning_thread_should_shutdown;
     bool is_scanning;
+    nearby_layer_bluetooth_discovered_advertisement_handler_t discovered_advertisement_handler;
 
     // hci
     int hci_route;
@@ -188,24 +191,44 @@ void nearby_layer_bluetooth_thread(nearby_layer_bluetooth_t* instance)
                         int current_advertising_info_iterator_index = 0;
                         while (current_advertising_info_iterator_index < current_advertising_info->length)
                         {
-                            uint8_t current_service_data_length = current_advertising_info->data[current_advertising_info_iterator_index++];
-                            if (current_service_data_length == 0)
-                                break;
-                            uint8_t current_service_data_type = current_advertising_info->data[current_advertising_info_iterator_index];
-
-                            // Print service data (type 0x16 for 16-bit UUID, 0x20 for 32-bit UUID, 0x21 for 128-bit UUID)
-                            if (current_service_data_type == 0x16 || current_service_data_type == 0x20 || current_service_data_type == 0x21)
+                            if (current_advertising_info->length >= 4)
                             {
-                                printf("Service Data (Type %02x) (Size %02x): ", current_service_data_type, current_service_data_length);
-                                for (int current_service_data_index = current_advertising_info_iterator_index + 1;
-                                     current_service_data_index < current_advertising_info_iterator_index + current_service_data_length; ++current_service_data_index)
-                                {
-                                    printf("%02x ", current_advertising_info->data[current_service_data_index]);
-                                }
-                                printf("\n");
-                            }
+                                uint8_t current_service_data_length = current_advertising_info->data[current_advertising_info_iterator_index++];
 
-                            current_advertising_info_iterator_index += current_service_data_length;
+                                // We remove 3 bytes because we do not need the uuid type and uuid.
+                                uint8_t current_service_data_advertisement_length = current_service_data_length - 3;
+
+                                if (current_service_data_length <= current_advertising_info->length)
+                                {
+
+                                    if (current_service_data_length == 0)
+                                    {
+                                        break;
+                                    }
+
+                                    uint8_t current_service_data_type = current_advertising_info->data[current_advertising_info_iterator_index++];
+
+                                    // Print service data (type 0x16 for 16-bit UUID)
+                                    if (current_service_data_type == 0x16)
+                                    {
+                                        uint16_t current_service_data_uuid = *(uint16_t*)(&current_advertising_info->data[current_advertising_info_iterator_index++]);
+
+                                        if (current_service_data_uuid == NEARBY_SHARE_ADVERTISEMENT_UUID)
+                                        {
+                                            if (instance->discovered_advertisement_handler != NULL)
+                                            {
+                                                instance->discovered_advertisement_handler(current_advertising_info->bdaddr.b, current_advertising_info->bdaddr_type == BDADDR_LE_RANDOM, &current_advertising_info->data[current_advertising_info_iterator_index], current_service_data_advertisement_length);
+                                            }
+                                        }
+                                    }
+                                }
+
+                                current_advertising_info_iterator_index += current_service_data_length;
+                            }
+                            else
+                            {
+                                break;
+                            }
                         }
 
                         current_advertising_report_position = current_advertising_info->data + current_advertising_info->length + 2;
@@ -227,6 +250,7 @@ nearby_layer_bluetooth_t* nearby_layer_bluetooth_create()
     instance->scanning_thread = 0;
     instance->is_scanning = false;
     instance->scanning_thread_should_shutdown = false;
+    instance->discovered_advertisement_handler = NULL;
 
     return instance;
 }
@@ -276,6 +300,11 @@ void nearby_layer_bluetooth_destroy(nearby_layer_bluetooth_t* instance)
 bool nearby_layer_bluetooth_is_running(nearby_layer_bluetooth_t* instance)
 {
     return instance->is_scanning;
+}
+
+void nearby_layer_bluetooth_set_discovered_advertisement_handler(nearby_layer_bluetooth_t* instance, nearby_layer_bluetooth_discovered_advertisement_handler_t handler)
+{
+    instance->discovered_advertisement_handler = handler;
 }
 
 #endif
