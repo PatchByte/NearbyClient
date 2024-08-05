@@ -6,4 +6,8 @@ add_subdirectory("Ash")
 add_subdirectory("glfw")
 add_subdirectory("NearbyProtocols")
 
+if(WIN32)
+	add_subdirectory("cppwinrt-cmake")
+endif()
+
 include("ImGui.cmake")
