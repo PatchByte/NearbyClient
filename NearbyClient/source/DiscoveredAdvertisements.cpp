@@ -19,13 +19,11 @@ namespace nearby::client
 
     NearbyDiscoveredAdvertisementBle::~NearbyDiscoveredAdvertisementBle()
     {
-        this->Reset();
+        this->Cleanup();
     }
 
     bool NearbyDiscoveredAdvertisementBle::Deserialize(void* AdvertisementData, size_t AdvertisementLength)
     {
-        this->Reset();
-
         {
             ash::AshCRC32 crc = ash::AshCRC32();
             crc.Update(AdvertisementData, AdvertisementLength);
@@ -37,7 +35,7 @@ namespace nearby::client
 
         if (nearby_medium_advertisement_ble_deserialize(m_Medium, &mediumBuffer) == false)
         {
-            this->Reset();
+            this->Cleanup();
             return false;
         }
 
@@ -48,7 +46,7 @@ namespace nearby::client
 
         if (connectionBuffer.has_error_occurred == true)
         {
-            this->Reset();
+            this->Cleanup();
             return false;
         }
 
@@ -57,14 +55,14 @@ namespace nearby::client
 
         if (nearby_share_advertisement_from_endpoint_info(m_Share, &shareBuffer) == false)
         {
-            this->Reset();
+            this->Cleanup();
             return false;
         }
 
         return true;
     }
 
-    bool NearbyDiscoveredAdvertisementBle::Reset()
+    bool NearbyDiscoveredAdvertisementBle::Cleanup()
     {
         if (m_Share)
         {

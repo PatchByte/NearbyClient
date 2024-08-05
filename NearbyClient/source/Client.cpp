@@ -1,4 +1,5 @@
 #include "NearbyClient/Client.hpp"
+#include "NearbyClient/DiscoveredAdvertisements.hpp"
 #include "NearbyClient/DiscoveredEndpoints.hpp"
 #include "NearbyLayers/Bluetooth.h"
 #include "NearbyRenderer/Renderer.hpp"
@@ -9,7 +10,7 @@
 namespace nearby::client
 {
 
-    NearbyClient::NearbyClient() : m_Renderer(nullptr), m_LayerBluetooth(nullptr)
+    NearbyClient::NearbyClient() : m_Renderer(nullptr), m_LayerBluetooth(nullptr), m_DiscoveredEndpoints()
     {
     }
 
@@ -107,7 +108,26 @@ namespace nearby::client
     {
         NearbyDiscoveredEndpointUniqueId uniqueId = NearbyDiscoveredEndpointBle::sfMakeUniqueId(MacAddress);
 
-        printf("Discovered advertisement. %llx\n", uniqueId.m_Raw);
+        if (m_DiscoveredEndpoints.contains(uniqueId.m_Raw) == true)
+        {
+            m_DiscoveredEndpoints.at(uniqueId.m_Raw)->DoPing();
+        }
+        else
+        {
+            NearbyDiscoveredAdvertisementBle* advertisementBle = new NearbyDiscoveredAdvertisementBle();
+
+            if(advertisementBle->Deserialize(AdvertisementData, AdvertisementLength))
+            {
+                NearbyDiscoveredEndpointBle* endpointBle = new NearbyDiscoveredEndpointBle(MacAddress, advertisementBle);
+
+                m_DiscoveredEndpoints.emplace(endpointBle->GetUniqueId().m_Raw, endpointBle);
+            }
+            else
+            {
+                delete advertisementBle;
+                advertisementBle = nullptr;
+            }
+        }
     }
 
 } // namespace nearby::client

@@ -37,6 +37,7 @@ namespace nearby::client
         : NearbyDiscoveredEndpointBase::NearbyDiscoveredEndpointBase(), m_Advertisement(Advertisement)
     {
         memcpy(m_MacAddress, MacAddress, sizeof(m_MacAddress));
+        m_UniqueId = sfMakeUniqueId(m_MacAddress);
     }
 
     NearbyDiscoveredEndpointBle::~NearbyDiscoveredEndpointBle()

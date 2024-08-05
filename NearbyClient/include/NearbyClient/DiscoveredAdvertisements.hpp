@@ -16,7 +16,7 @@ namespace nearby::client
         ~NearbyDiscoveredAdvertisementBle();
 
         bool Deserialize(void* AdvertisementData, size_t AdvertisementLength);
-        bool Reset();
+        bool Cleanup();
 
         nearby_medium_advertisement_ble* GetMedium()
         {
