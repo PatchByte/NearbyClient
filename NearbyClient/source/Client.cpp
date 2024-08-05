@@ -6,6 +6,7 @@
 #include "imgui.h"
 #include <cstring>
 #include <future>
+#include <thread>
 
 namespace nearby::client
 {
@@ -25,17 +26,13 @@ namespace nearby::client
             [](unsigned char* MacAddress, bool IsRandomMacAddress, unsigned char* AdvertisementData, unsigned short AdvertisementLength, void* UserParameter) -> void
             {
                 // We do not want to block the scanning thread, so we exit as fast as possible.
-                auto res = std::async(std::launch::async,
-                                      [&]
-                                      {
-                                          // Forward this to the class handler, mmmmmhhhhhh I love C.
-                                          static_cast<NearbyClient*>(UserParameter)->OnDiscoveredAdvertisement(MacAddress, IsRandomMacAddress, AdvertisementData, AdvertisementLength, UserParameter);
-                                      });
-
-                if (res.valid() == false)
-                {
-                    printf("[!] Failed to launch async thread.");
-                }
+                std::ignore =
+                    std::async(std::launch::async,
+                               [&]
+                               {
+                                   // Forward this to the class handler, mmmmmhhhhhh I love C.
+                                   static_cast<NearbyClient*>(UserParameter)->OnDiscoveredAdvertisement(MacAddress, IsRandomMacAddress, AdvertisementData, AdvertisementLength, UserParameter);
+                               });
             },
             this);
 
@@ -100,12 +97,29 @@ namespace nearby::client
                 }
             }
             ImGui::EndMenuBar();
+
+            if (ImGui::TreeNode("Debug"))
+            {
+                for (auto currentDiscoveredEndpointIterator : m_DiscoveredEndpoints)
+                {
+                    if (ImGui::TreeNode(currentDiscoveredEndpointIterator.second->GetDisplayName().data()))
+                    {
+                        currentDiscoveredEndpointIterator.second->RenderDebugFrame();
+
+                        ImGui::TreePop();
+                    }
+                }
+
+                ImGui::TreePop();
+            }
         }
         ImGui::End();
     }
 
     void NearbyClient::OnDiscoveredAdvertisement(unsigned char* MacAddress, bool IsRandomMacAddress, unsigned char* AdvertisementData, unsigned short AdvertisementLength, void* UserParameter)
     {
+        std::this_thread::yield();
+
         NearbyDiscoveredEndpointUniqueId uniqueId = NearbyDiscoveredEndpointBle::sfMakeUniqueId(MacAddress);
 
         if (m_DiscoveredEndpoints.contains(uniqueId.m_Raw) == true)
@@ -116,7 +130,7 @@ namespace nearby::client
         {
             NearbyDiscoveredAdvertisementBle* advertisementBle = new NearbyDiscoveredAdvertisementBle();
 
-            if(advertisementBle->Deserialize(AdvertisementData, AdvertisementLength))
+            if (advertisementBle->Deserialize(AdvertisementData, AdvertisementLength))
             {
                 NearbyDiscoveredEndpointBle* endpointBle = new NearbyDiscoveredEndpointBle(MacAddress, advertisementBle);
 

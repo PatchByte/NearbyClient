@@ -212,7 +212,8 @@ void nearby_layer_bluetooth_thread(nearby_layer_bluetooth_t* instance)
                                     // Print service data (type 0x16 for 16-bit UUID)
                                     if (current_service_data_type == 0x16)
                                     {
-                                        uint16_t current_service_data_uuid = *(uint16_t*)(&current_advertising_info->data[current_advertising_info_iterator_index++]);
+                                        uint16_t current_service_data_uuid = *(uint16_t*)(&current_advertising_info->data[current_advertising_info_iterator_index]);
+                                        current_advertising_info_iterator_index += 2;
 
                                         if (current_service_data_uuid == NEARBY_SHARE_ADVERTISEMENT_UUID)
                                         {

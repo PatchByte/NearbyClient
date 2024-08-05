@@ -5,6 +5,7 @@
 #include "NearbyProtocols/ShareAdvertisement.h"
 #include "NearbyUtils/Buffer.h"
 #include <string.h>
+#include <thread>
 
 namespace nearby::client
 {
@@ -42,7 +43,11 @@ namespace nearby::client
         nearby_utils_buffer connectionBuffer = nearby_utils_buffer();
         nearby_utils_buffer_initialize(&connectionBuffer, m_Medium->data, m_Medium->data_size);
 
+        std::this_thread::yield();
+
         nearby_connection_advertisement_ble_deserialize(m_Connection, &connectionBuffer, m_Medium->is_fast_advertisement);
+
+        printf("%i\n", m_Connection->endpoint_info_length);
 
         if (connectionBuffer.has_error_occurred == true)
         {

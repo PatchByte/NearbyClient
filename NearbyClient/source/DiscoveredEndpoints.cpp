@@ -1,5 +1,6 @@
 #include "NearbyClient/DiscoveredEndpoints.hpp"
 #include "NearbyProtocols/MediumAdvertisement.h"
+#include "fmt/format.h"
 #include "imgui.h"
 #include <chrono>
 #include <cstring>
@@ -47,6 +48,16 @@ namespace nearby::client
             delete m_Advertisement;
             m_Advertisement = nullptr;
         }
+    }
+
+    std::string NearbyDiscoveredEndpointBle::GetDisplayName()
+    {
+        #if NEARBYSERVICES_ENABLE_GOOGLE_BACKEND_SUPPORT
+        #error "Not implemented yet"
+        #endif
+
+        //return m_Advertisement->GetConnection()->endpoint_id;
+        return fmt::format("{:.{}} (Endpoint-Id)", m_Advertisement->GetConnection()->endpoint_id, 4);
     }
 
     void NearbyDiscoveredEndpointBle::RenderDebugFrame()

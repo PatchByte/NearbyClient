@@ -48,7 +48,14 @@ namespace nearby::client
             return m_UniqueId;
         }
 
-        virtual void RenderDebugFrame() = 0;
+        // Meta-Data
+
+        virtual std::string GetDisplayName()
+        {
+            return "Not implemented";
+        }
+
+        // Ping-Functionality for timeout and lost endpoints
 
         inline std::chrono::seconds GetLastPing()
         {
@@ -57,6 +64,10 @@ namespace nearby::client
 
         void DoPing();
         bool IsPingTimeout(std::chrono::seconds MaxTimeout);
+
+        // Gui Abstraction Layer
+
+        virtual void RenderDebugFrame() = 0;
 
     protected:
         std::chrono::seconds m_LastPing;
@@ -75,9 +86,15 @@ namespace nearby::client
             return NearbyDiscoveredEndpointType::BLE;
         }
 
+        // Meta-Data
+
+        std::string GetDisplayName() override;
+
+        // Gui Abstraction Layer
+
         void RenderDebugFrame() override;
 
-        // Bluetooth Specific Things
+        // Bluetooth
 
         inline unsigned char* GetMacAddress()
         {

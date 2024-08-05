@@ -9,7 +9,7 @@ file(GLOB NEARBYCLIENT_SOURCE_FILES
 add_executable(${PROJECT_NAME} ${NEARBYCLIENT_SOURCE_FILES})
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_link_libraries(${PROJECT_NAME} PRIVATE NearbyRenderer::NearbyRenderer NearbyLayers::NearbyLayers NearbyProtocols::NearbyProtocols)
+target_link_libraries(${PROJECT_NAME} PRIVATE NearbyRenderer::NearbyRenderer NearbyLayers::NearbyLayers NearbyProtocols::NearbyProtocols fmt::fmt)
 
 add_custom_command(
     TARGET ${PROJECT_NAME} POST_BUILD
