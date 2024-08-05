@@ -1,6 +1,7 @@
 #ifndef _NEARBYCLIENT_DISCOVERED_HPP
 #define _NEARBYCLIENT_DISCOVERED_HPP
 
+#include "Ash/AshCRC32.h"
 #include "NearbyProtocols/ConnectionAdvertisement.h"
 #include "NearbyProtocols/MediumAdvertisement.h"
 #include "NearbyProtocols/ShareAdvertisement.h"
@@ -32,6 +33,7 @@ namespace nearby::client
             return m_Share;
         }
     private:
+        ash::AshCRC32Value m_Hash;
         nearby_medium_advertisement_ble* m_Medium;
         nearby_connection_advertisement_ble* m_Connection;
         nearby_share_advertisement* m_Share;

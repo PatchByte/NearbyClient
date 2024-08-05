@@ -1,7 +1,9 @@
 #include "NearbyClient/Client.hpp"
+#include "NearbyClient/DiscoveredEndpoints.hpp"
 #include "NearbyLayers/Bluetooth.h"
 #include "NearbyRenderer/Renderer.hpp"
 #include "imgui.h"
+#include <cstring>
 #include <future>
 
 namespace nearby::client
@@ -103,7 +105,9 @@ namespace nearby::client
 
     void NearbyClient::OnDiscoveredAdvertisement(unsigned char* MacAddress, bool IsRandomMacAddress, unsigned char* AdvertisementData, unsigned short AdvertisementLength, void* UserParameter)
     {
-        printf("Discovered advertisement. %i\n", AdvertisementLength);
+        NearbyDiscoveredEndpointUniqueId uniqueId = NearbyDiscoveredEndpointBle::sfMakeUniqueId(MacAddress);
+
+        printf("Discovered advertisement. %llx\n", uniqueId.m_Raw);
     }
 
 } // namespace nearby::client

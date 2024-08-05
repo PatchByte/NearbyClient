@@ -1,4 +1,5 @@
 #include "NearbyClient/DiscoveredAdvertisements.hpp"
+#include "Ash/AshCRC32.h"
 #include "NearbyProtocols/ConnectionAdvertisement.h"
 #include "NearbyProtocols/MediumAdvertisement.h"
 #include "NearbyProtocols/ShareAdvertisement.h"
@@ -9,7 +10,7 @@ namespace nearby::client
 {
 
     NearbyDiscoveredAdvertisementBle::NearbyDiscoveredAdvertisementBle()
-        : m_Medium(new nearby_medium_advertisement_ble()), m_Connection(new nearby_connection_advertisement_ble()), m_Share(new nearby_share_advertisement())
+        : m_Hash(0), m_Medium(new nearby_medium_advertisement_ble()), m_Connection(new nearby_connection_advertisement_ble()), m_Share(new nearby_share_advertisement())
     {
         memset(m_Medium, 0, sizeof(*m_Medium));
         memset(m_Connection, 0, sizeof(*m_Connection));
@@ -24,6 +25,12 @@ namespace nearby::client
     bool NearbyDiscoveredAdvertisementBle::Deserialize(void* AdvertisementData, size_t AdvertisementLength)
     {
         this->Reset();
+
+        {
+            ash::AshCRC32 crc = ash::AshCRC32();
+            crc.Update(AdvertisementData, AdvertisementLength);
+            m_Hash = crc.GetValue();
+        }
 
         nearby_utils_buffer mediumBuffer = nearby_utils_buffer();
         nearby_utils_buffer_initialize(&mediumBuffer, AdvertisementData, AdvertisementLength);

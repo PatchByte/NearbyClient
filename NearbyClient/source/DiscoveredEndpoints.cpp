@@ -16,7 +16,7 @@ namespace nearby::client
 
     // NearbyDiscoveredEndpointBase
 
-    NearbyDiscoveredEndpointBase::NearbyDiscoveredEndpointBase() : m_LastPing()
+    NearbyDiscoveredEndpointBase::NearbyDiscoveredEndpointBase() : m_LastPing(), m_UniqueId()
     {
         DoPing();
     }
@@ -33,10 +33,10 @@ namespace nearby::client
 
     // NearbyDiscoveredEndpointBle
 
-    NearbyDiscoveredEndpointBle::NearbyDiscoveredEndpointBle(NearbyDiscoveredAdvertisementBle* Advertisement)
+    NearbyDiscoveredEndpointBle::NearbyDiscoveredEndpointBle(unsigned char* MacAddress, NearbyDiscoveredAdvertisementBle* Advertisement)
         : NearbyDiscoveredEndpointBase::NearbyDiscoveredEndpointBase(), m_Advertisement(Advertisement)
     {
-        memset(m_MacAddress, 0, sizeof(m_MacAddress));
+        memcpy(m_MacAddress, MacAddress, sizeof(m_MacAddress));
     }
 
     NearbyDiscoveredEndpointBle::~NearbyDiscoveredEndpointBle()
@@ -61,6 +61,15 @@ namespace nearby::client
 
             ImGui::EndTable();
         }
+    }
+
+    NearbyDiscoveredEndpointUniqueId NearbyDiscoveredEndpointBle::sfMakeUniqueId(unsigned char* MacAddress)
+    {
+        NearbyDiscoveredEndpointUniqueId uniqueId = {.m_Build{.m_Type = NearbyDiscoveredEndpointType::BLE}};
+
+        memcpy(&uniqueId.m_Build.m_Ble.m_Mac, MacAddress, sizeof(uniqueId.m_Build.m_Ble.m_Mac));
+
+        return std::move(uniqueId);
     }
 
 } // namespace nearby::client
