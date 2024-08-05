@@ -1,6 +1,6 @@
 #include "NearbyLayers/Bluetooth.h"
-#include <unistd.h>
 #if linux
+#include <unistd.h>
 #include <complex.h>
 #include <errno.h>
 #include <malloc.h>
@@ -97,7 +97,7 @@ void nearby_layer_bluetooth_thread(nearby_layer_bluetooth_t* instance)
     le_set_scan_parameters_cp ble_scan_parameters;
     zero_memory(ble_scan_parameters);
 
-    ble_scan_parameters.type = 0x01;
+    ble_scan_parameters.type = 0x00;
     ble_scan_parameters.interval = htobs(0x0010);
     ble_scan_parameters.window = htobs(0x0010);
     ble_scan_parameters.own_bdaddr_type = LE_PUBLIC_ADDRESS; // Public Device Address (default).

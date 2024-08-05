@@ -8,11 +8,11 @@
 
 namespace nearby::client
 {
-    class NearbyDiscoveredAdvertisement
+    class NearbyBleDiscoveredAdvertisement
     {
     public:
-        NearbyDiscoveredAdvertisement();
-        ~NearbyDiscoveredAdvertisement();
+        NearbyBleDiscoveredAdvertisement();
+        ~NearbyBleDiscoveredAdvertisement();
 
         bool Deserialize(void* AdvertisementData, size_t AdvertisementLength);
         bool Reset();

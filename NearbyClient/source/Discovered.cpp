@@ -8,7 +8,7 @@
 namespace nearby::client
 {
 
-    NearbyDiscoveredAdvertisement::NearbyDiscoveredAdvertisement()
+    NearbyBleDiscoveredAdvertisement::NearbyBleDiscoveredAdvertisement()
         : m_Medium(new nearby_medium_advertisement_ble()), m_Connection(new nearby_connection_advertisement_ble()), m_Share(new nearby_share_advertisement())
     {
         memset(m_Medium, 0, sizeof(*m_Medium));
@@ -16,13 +16,15 @@ namespace nearby::client
         memset(m_Share, 0, sizeof(*m_Share));
     }
 
-    NearbyDiscoveredAdvertisement::~NearbyDiscoveredAdvertisement()
+    NearbyBleDiscoveredAdvertisement::~NearbyBleDiscoveredAdvertisement()
     {
         this->Reset();
     }
 
-    bool NearbyDiscoveredAdvertisement::Deserialize(void* AdvertisementData, size_t AdvertisementLength)
+    bool NearbyBleDiscoveredAdvertisement::Deserialize(void* AdvertisementData, size_t AdvertisementLength)
     {
+        this->Reset();
+
         nearby_utils_buffer mediumBuffer = nearby_utils_buffer();
         nearby_utils_buffer_initialize(&mediumBuffer, AdvertisementData, AdvertisementLength);
 
@@ -55,7 +57,7 @@ namespace nearby::client
         return true;
     }
 
-    bool NearbyDiscoveredAdvertisement::Reset()
+    bool NearbyBleDiscoveredAdvertisement::Reset()
     {
         if (m_Share)
         {
