@@ -14,3 +14,6 @@
 [submodule "Vendors/fmt"]
 	path = Vendors/fmt
 	url = https://github.com/fmtlib/fmt.git
+[submodule "Vendors/cppwinrt-cmake"]
+	path = Vendors/cppwinrt-cmake
+	url = https://github.com/cpp-openapi/cppwinrt-cmake
