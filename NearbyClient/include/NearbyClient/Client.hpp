@@ -13,7 +13,12 @@ namespace nearby::client
         NearbyClient();
 
         void Run();
+
+        void ApplyStyleGui();
         void RenderGui();
+
+        void OnDiscoveredAdvertisement(unsigned char* MacAddress, bool IsRandomMacAddress, unsigned char* AdvertisementData, unsigned short AdvertisementLength, void* UserParameter);
+
     private:
         renderer::NearbyRendererBase* m_Renderer;
         nearby_layer_bluetooth_t* m_LayerBluetooth;

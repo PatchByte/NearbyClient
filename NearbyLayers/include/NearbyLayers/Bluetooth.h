@@ -27,7 +27,7 @@ extern "C"
     bool nearby_layer_bluetooth_start_scanning(nearby_layer_bluetooth_t* instance);
     bool nearby_layer_bluetooth_stop_scanning(nearby_layer_bluetooth_t* instance);
     void nearby_layer_bluetooth_destroy(nearby_layer_bluetooth_t* instance);
-    bool nearby_layer_bluetooth_is_running(nearby_layer_bluetooth_t* instance);
+    bool nearby_layer_bluetooth_is_scanning(nearby_layer_bluetooth_t* instance);
     void nearby_layer_bluetooth_set_discovered_advertisement_handler(nearby_layer_bluetooth_t* instance, nearby_layer_bluetooth_discovered_advertisement_handler_t handler, void* handler_user_parameter);
 
 #ifdef __cplusplus

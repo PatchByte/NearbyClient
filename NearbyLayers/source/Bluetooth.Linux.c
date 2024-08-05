@@ -301,7 +301,7 @@ void nearby_layer_bluetooth_destroy(nearby_layer_bluetooth_t* instance)
     free(instance);
 }
 
-bool nearby_layer_bluetooth_is_running(nearby_layer_bluetooth_t* instance)
+bool nearby_layer_bluetooth_is_scanning(nearby_layer_bluetooth_t* instance)
 {
     return instance->is_scanning;
 }
