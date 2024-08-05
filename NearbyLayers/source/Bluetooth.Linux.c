@@ -40,6 +40,7 @@ struct nearby_layer_bluetooth
     bool scanning_thread_should_shutdown;
     bool is_scanning;
     nearby_layer_bluetooth_discovered_advertisement_handler_t discovered_advertisement_handler;
+    void* discovered_advertisement_handler_user_parameter;
 
     // hci
     int hci_route;
@@ -217,7 +218,9 @@ void nearby_layer_bluetooth_thread(nearby_layer_bluetooth_t* instance)
                                         {
                                             if (instance->discovered_advertisement_handler != NULL)
                                             {
-                                                instance->discovered_advertisement_handler(current_advertising_info->bdaddr.b, current_advertising_info->bdaddr_type == BDADDR_LE_RANDOM, &current_advertising_info->data[current_advertising_info_iterator_index], current_service_data_advertisement_length);
+                                                instance->discovered_advertisement_handler(current_advertising_info->bdaddr.b, current_advertising_info->bdaddr_type == BDADDR_LE_RANDOM,
+                                                                                           &current_advertising_info->data[current_advertising_info_iterator_index],
+                                                                                           current_service_data_advertisement_length, instance->discovered_advertisement_handler_user_parameter);
                                             }
                                         }
                                     }
@@ -251,6 +254,7 @@ nearby_layer_bluetooth_t* nearby_layer_bluetooth_create()
     instance->is_scanning = false;
     instance->scanning_thread_should_shutdown = false;
     instance->discovered_advertisement_handler = NULL;
+    instance->discovered_advertisement_handler_user_parameter = NULL;
 
     return instance;
 }
@@ -302,9 +306,10 @@ bool nearby_layer_bluetooth_is_running(nearby_layer_bluetooth_t* instance)
     return instance->is_scanning;
 }
 
-void nearby_layer_bluetooth_set_discovered_advertisement_handler(nearby_layer_bluetooth_t* instance, nearby_layer_bluetooth_discovered_advertisement_handler_t handler)
+void nearby_layer_bluetooth_set_discovered_advertisement_handler(nearby_layer_bluetooth_t* instance, nearby_layer_bluetooth_discovered_advertisement_handler_t handler, void* handler_user_parameter)
 {
     instance->discovered_advertisement_handler = handler;
+    instance->discovered_advertisement_handler_user_parameter = handler_user_parameter;
 }
 
 #endif
