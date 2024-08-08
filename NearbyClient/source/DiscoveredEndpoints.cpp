@@ -1,9 +1,9 @@
 #include "NearbyClient/DiscoveredEndpoints.hpp"
 #include "NearbyClient/DiscoveredEndpointId.hpp"
 #include "NearbyProtocols/MediumAdvertisement.h"
+#include "fmt/chrono.h"
 #include "fmt/compile.h"
 #include "fmt/format.h"
-#include "fmt/chrono.h"
 #include "imgui.h"
 #include <chrono>
 #include <cstring>
@@ -68,11 +68,24 @@ namespace nearby::client
 
             ImGui::EndTable();
         }
+
+        if (ImGui::TreeNode("Share"))
+        {
+            if (ImGui::BeginTable("##ConnectionTable", 2))
+            {
+                auto share = m_Advertisement->GetShare();
+
+                RENDER_TABLE_ENTRY("Device Type", "%s", nearby_share_target_type_to_string(share->device_type));
+
+                ImGui::EndTable();
+            }
+            ImGui::TreePop();
+        }
     }
 
     void NearbyDiscoveredEndpointBle::SetAdvertisement(NearbyDiscoveredAdvertisementBle* Advertisement, bool FreeOld)
     {
-        if(m_Advertisement && FreeOld)
+        if (m_Advertisement && FreeOld)
         {
             delete m_Advertisement;
             m_Advertisement = nullptr;
@@ -81,9 +94,8 @@ namespace nearby::client
         m_Advertisement = Advertisement;
 
         m_Metadata.m_Type = NearbyDiscoveredEndpointType::BLE;
-        m_Metadata.m_UniqueId = NearbyDiscoveredEndpointIdUtil::sfMakeBleUUID(Advertisement->GetConnection()->endpoint_id);
+        m_Metadata.m_UniqueId = Advertisement->GetEndpointId();
         m_Metadata.m_Display = fmt::format("{:.4} (Endpoint-Id)", Advertisement->GetConnection()->endpoint_id);
     }
-
 
 } // namespace nearby::client

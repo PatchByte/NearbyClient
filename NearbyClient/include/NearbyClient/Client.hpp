@@ -20,6 +20,8 @@ namespace nearby::client
         void ApplyStyleGui();
         void RenderGui();
 
+        void CheckForLostEndpointsAndCleanup();
+
         void OnDiscoveredAdvertisement(unsigned char* MacAddress, bool IsRandomMacAddress, unsigned char* AdvertisementData, unsigned short AdvertisementLength, void* UserParameter);
 
     private:

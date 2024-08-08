@@ -1,16 +1,22 @@
 #include "NearbyClient/Client.hpp"
 #include "NearbyClient/DiscoveredAdvertisements.hpp"
+#include "NearbyClient/DiscoveredEndpointId.hpp"
 #include "NearbyClient/DiscoveredEndpoints.hpp"
 #include "NearbyLayers/Bluetooth.h"
 #include "NearbyRenderer/Renderer.hpp"
 #include "imgui.h"
+#include <chrono>
+#include <cstdio>
 #include <cstring>
 #include <future>
 #include <thread>
 #include <utility>
+#include <vector>
 
 namespace nearby::client
 {
+
+    static std::chrono::seconds smEndpointTimeoutBle = std::chrono::seconds(2);
 
     NearbyClient::NearbyClient() : m_Renderer(nullptr), m_LayerBluetooth(nullptr), m_DiscoveredEndpoints()
     {
@@ -50,6 +56,12 @@ namespace nearby::client
 
         while (m_Renderer->ShallRender())
         {
+            // Move this into another thread
+
+            CheckForLostEndpointsAndCleanup();
+
+            // Actual render stuff
+
             m_Renderer->BeginFrame();
 
             this->RenderGui();
@@ -119,6 +131,26 @@ namespace nearby::client
         ImGui::End();
     }
 
+    void NearbyClient::CheckForLostEndpointsAndCleanup()
+    {
+        std::vector<NearbyDiscoveredEndpointId> lostEndpointIds = {};
+
+        for (auto currentIterator : m_DiscoveredEndpoints)
+        {
+            if (currentIterator.second->HasLastLifeSignTimeouted(smEndpointTimeoutBle) == true)
+            {
+                lostEndpointIds.push_back(currentIterator.first);
+            }
+        }
+
+        for (auto currentLostEndpointId : lostEndpointIds)
+        {
+            NearbyDiscoveredEndpointBase* lostEndpoint = m_DiscoveredEndpoints.at(currentLostEndpointId);
+            m_DiscoveredEndpoints.erase(currentLostEndpointId);
+            delete lostEndpoint;
+        }
+    }
+
     void NearbyClient::OnDiscoveredAdvertisement(unsigned char* MacAddress, bool IsRandomMacAddress, unsigned char* AdvertisementData, unsigned short AdvertisementLength, void* UserParameter)
     {
         std::this_thread::yield();
@@ -141,8 +173,6 @@ namespace nearby::client
                 endpoint->SetReceivedLastLifeSign();
                 m_DiscoveredEndpoints.emplace(advertisementBle->GetEndpointId(), endpoint);
             }
-
-
         }
         else
         {
