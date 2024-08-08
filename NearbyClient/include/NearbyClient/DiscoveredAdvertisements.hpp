@@ -2,6 +2,7 @@
 #define _NEARBYCLIENT_DISCOVERED_HPP
 
 #include "Ash/AshCRC32.h"
+#include "NearbyClient/DiscoveredEndpointId.hpp"
 #include "NearbyProtocols/ConnectionAdvertisement.h"
 #include "NearbyProtocols/MediumAdvertisement.h"
 #include "NearbyProtocols/ShareAdvertisement.h"
@@ -17,6 +18,8 @@ namespace nearby::client
 
         bool Deserialize(void* AdvertisementData, size_t AdvertisementLength);
         bool Cleanup();
+
+        NearbyDiscoveredEndpointId GetEndpointId();
 
         nearby_medium_advertisement_ble* GetMedium()
         {

@@ -1,6 +1,9 @@
 #include "NearbyClient/DiscoveredEndpoints.hpp"
+#include "NearbyClient/DiscoveredEndpointId.hpp"
 #include "NearbyProtocols/MediumAdvertisement.h"
+#include "fmt/compile.h"
 #include "fmt/format.h"
+#include "fmt/chrono.h"
 #include "imgui.h"
 #include <chrono>
 #include <cstring>
@@ -17,28 +20,29 @@ namespace nearby::client
 
     // NearbyDiscoveredEndpointBase
 
-    NearbyDiscoveredEndpointBase::NearbyDiscoveredEndpointBase() : m_LastPing(), m_UniqueId()
+    NearbyDiscoveredEndpointBase::NearbyDiscoveredEndpointBase() : m_LastLifeSign(), m_Metadata()
     {
-        DoPing();
+        SetReceivedLastLifeSign();
     }
 
-    void NearbyDiscoveredEndpointBase::DoPing()
+    void NearbyDiscoveredEndpointBase::SetReceivedLastLifeSign()
     {
-        m_LastPing = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch());
+        m_LastLifeSign = std::chrono::system_clock::now();
     }
 
-    bool NearbyDiscoveredEndpointBase::IsPingTimeout(std::chrono::seconds MaxTimeout)
+    bool NearbyDiscoveredEndpointBase::HasLastLifeSignTimeouted(std::chrono::seconds MaxTimeout)
     {
-        return (std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()) - m_LastPing) > MaxTimeout;
+        return (std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()) - m_LastLifeSign.time_since_epoch()) > MaxTimeout;
     }
 
     // NearbyDiscoveredEndpointBle
 
     NearbyDiscoveredEndpointBle::NearbyDiscoveredEndpointBle(unsigned char* MacAddress, NearbyDiscoveredAdvertisementBle* Advertisement)
-        : NearbyDiscoveredEndpointBase::NearbyDiscoveredEndpointBase(), m_Advertisement(Advertisement)
+        : NearbyDiscoveredEndpointBase::NearbyDiscoveredEndpointBase(), m_Advertisement(nullptr)
     {
         memcpy(m_MacAddress, MacAddress, sizeof(m_MacAddress));
-        m_UniqueId = sfMakeUniqueId(m_MacAddress);
+
+        SetAdvertisement(Advertisement);
     }
 
     NearbyDiscoveredEndpointBle::~NearbyDiscoveredEndpointBle()
@@ -48,16 +52,6 @@ namespace nearby::client
             delete m_Advertisement;
             m_Advertisement = nullptr;
         }
-    }
-
-    std::string NearbyDiscoveredEndpointBle::GetDisplayName()
-    {
-        #if NEARBYSERVICES_ENABLE_GOOGLE_BACKEND_SUPPORT
-        #error "Not implemented yet"
-        #endif
-
-        //return m_Advertisement->GetConnection()->endpoint_id;
-        return fmt::format("{:.{}} (Endpoint-Id)", m_Advertisement->GetConnection()->endpoint_id, 4);
     }
 
     void NearbyDiscoveredEndpointBle::RenderDebugFrame()
@@ -70,18 +64,26 @@ namespace nearby::client
             RENDER_TABLE_ENTRY("Is Fast Advertisement", "%s", medium->is_fast_advertisement == true ? "yes" : "no");
             RENDER_TABLE_ENTRY("Is Device Token Present", "%s", medium->is_device_token_present == true ? "yes" : "no");
             RENDER_TABLE_ENTRY("Is Extra Field", "%s", medium->is_device_token_present == true ? "yes" : "no");
+            RENDER_TABLE_ENTRY("Last Life Sign", "%s", fmt::format("{}", this->m_LastLifeSign).data());
 
             ImGui::EndTable();
         }
     }
 
-    NearbyDiscoveredEndpointUniqueId NearbyDiscoveredEndpointBle::sfMakeUniqueId(unsigned char* MacAddress)
+    void NearbyDiscoveredEndpointBle::SetAdvertisement(NearbyDiscoveredAdvertisementBle* Advertisement, bool FreeOld)
     {
-        NearbyDiscoveredEndpointUniqueId uniqueId = {.m_Build{.m_Type = NearbyDiscoveredEndpointType::BLE}};
+        if(m_Advertisement && FreeOld)
+        {
+            delete m_Advertisement;
+            m_Advertisement = nullptr;
+        }
 
-        memcpy(&uniqueId.m_Build.m_Ble.m_Mac, MacAddress, sizeof(uniqueId.m_Build.m_Ble.m_Mac));
+        m_Advertisement = Advertisement;
 
-        return std::move(uniqueId);
+        m_Metadata.m_Type = NearbyDiscoveredEndpointType::BLE;
+        m_Metadata.m_UniqueId = NearbyDiscoveredEndpointIdUtil::sfMakeBleUUID(Advertisement->GetConnection()->endpoint_id);
+        m_Metadata.m_Display = fmt::format("{:.4} (Endpoint-Id)", Advertisement->GetConnection()->endpoint_id);
     }
+
 
 } // namespace nearby::client

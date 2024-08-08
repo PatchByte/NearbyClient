@@ -7,6 +7,7 @@
 #include <cstring>
 #include <future>
 #include <thread>
+#include <utility>
 
 namespace nearby::client
 {
@@ -102,7 +103,9 @@ namespace nearby::client
             {
                 for (auto currentDiscoveredEndpointIterator : m_DiscoveredEndpoints)
                 {
-                    if (ImGui::TreeNode(currentDiscoveredEndpointIterator.second->GetDisplayName().data()))
+                    auto currentMetadata = currentDiscoveredEndpointIterator.second->GetMetadata();
+
+                    if (ImGui::TreeNode(currentMetadata.m_Display.data()))
                     {
                         currentDiscoveredEndpointIterator.second->RenderDebugFrame();
 
@@ -120,27 +123,30 @@ namespace nearby::client
     {
         std::this_thread::yield();
 
-        NearbyDiscoveredEndpointUniqueId uniqueId = NearbyDiscoveredEndpointBle::sfMakeUniqueId(MacAddress);
+        NearbyDiscoveredAdvertisementBle* advertisementBle = new NearbyDiscoveredAdvertisementBle();
 
-        if (m_DiscoveredEndpoints.contains(uniqueId.m_Raw) == true)
+        if (advertisementBle->Deserialize(AdvertisementData, AdvertisementLength))
         {
-            m_DiscoveredEndpoints.at(uniqueId.m_Raw)->DoPing();
-        }
-        else
-        {
-            NearbyDiscoveredAdvertisementBle* advertisementBle = new NearbyDiscoveredAdvertisementBle();
+            NearbyDiscoveredEndpointBle* endpoint = nullptr;
 
-            if (advertisementBle->Deserialize(AdvertisementData, AdvertisementLength))
+            if (m_DiscoveredEndpoints.contains(advertisementBle->GetEndpointId()))
             {
-                NearbyDiscoveredEndpointBle* endpointBle = new NearbyDiscoveredEndpointBle(MacAddress, advertisementBle);
-
-                m_DiscoveredEndpoints.emplace(endpointBle->GetUniqueId().m_Raw, endpointBle);
+                endpoint = dynamic_cast<NearbyDiscoveredEndpointBle*>(m_DiscoveredEndpoints.at(advertisementBle->GetEndpointId()));
+                endpoint->SetAdvertisement(advertisementBle);
+                endpoint->SetReceivedLastLifeSign();
             }
             else
             {
-                delete advertisementBle;
-                advertisementBle = nullptr;
+                endpoint = new NearbyDiscoveredEndpointBle(MacAddress, advertisementBle);
+                endpoint->SetReceivedLastLifeSign();
+                m_DiscoveredEndpoints.emplace(advertisementBle->GetEndpointId(), endpoint);
             }
+
+
+        }
+        else
+        {
+            delete advertisementBle;
         }
     }
 

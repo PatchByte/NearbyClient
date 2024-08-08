@@ -3,6 +3,7 @@
 
 #include "Ash/AshCRC32.h"
 #include "NearbyClient/DiscoveredAdvertisements.hpp"
+#include "NearbyClient/DiscoveredEndpointId.hpp"
 #include <chrono>
 
 namespace nearby::client
@@ -14,22 +15,11 @@ namespace nearby::client
         BLE = 1
     };
 
-    union NearbyDiscoveredEndpointUniqueId
+    struct NearbyDiscoveredEndpointMetadata
     {
-        unsigned long long m_Raw;
-
-        struct
-        {
-            NearbyDiscoveredEndpointType m_Type;
-
-            union
-            {
-                struct
-                {
-                    unsigned char m_Mac[6];
-                } m_Ble;
-            };
-        } m_Build;
+        NearbyDiscoveredEndpointType m_Type;
+        NearbyDiscoveredEndpointId m_UniqueId;
+        std::string m_Display;
     };
 
     class NearbyDiscoveredEndpointBase
@@ -38,40 +28,28 @@ namespace nearby::client
         NearbyDiscoveredEndpointBase();
         virtual ~NearbyDiscoveredEndpointBase() = default;
 
-        virtual NearbyDiscoveredEndpointType GetType()
+        virtual NearbyDiscoveredEndpointMetadata GetMetadata()
         {
-            return NearbyDiscoveredEndpointType::INVALID;
+            return m_Metadata;
         }
 
-        virtual NearbyDiscoveredEndpointUniqueId GetUniqueId()
+        // Ping System to check for lost devices.
+
+        inline std::chrono::time_point<std::chrono::system_clock> GetLastLifeSign()
         {
-            return m_UniqueId;
+            return m_LastLifeSign;
         }
 
-        // Meta-Data
-
-        virtual std::string GetDisplayName()
-        {
-            return "Not implemented";
-        }
-
-        // Ping-Functionality for timeout and lost endpoints
-
-        inline std::chrono::seconds GetLastPing()
-        {
-            return m_LastPing;
-        }
-
-        void DoPing();
-        bool IsPingTimeout(std::chrono::seconds MaxTimeout);
+        void SetReceivedLastLifeSign();
+        bool HasLastLifeSignTimeouted(std::chrono::seconds MaxTimeout);
 
         // Gui Abstraction Layer
 
-        virtual void RenderDebugFrame() = 0;
+        virtual void RenderDebugFrame() {};
 
     protected:
-        std::chrono::seconds m_LastPing;
-        NearbyDiscoveredEndpointUniqueId m_UniqueId;
+        NearbyDiscoveredEndpointMetadata m_Metadata;
+        std::chrono::time_point<std::chrono::system_clock> m_LastLifeSign;
     };
 
     class NearbyDiscoveredEndpointBle : public NearbyDiscoveredEndpointBase
@@ -81,32 +59,22 @@ namespace nearby::client
         NearbyDiscoveredEndpointBle(unsigned char* MacAddress, NearbyDiscoveredAdvertisementBle* Advertisement);
         ~NearbyDiscoveredEndpointBle() override;
 
-        NearbyDiscoveredEndpointType GetType() override
-        {
-            return NearbyDiscoveredEndpointType::BLE;
-        }
-
-        // Meta-Data
-
-        std::string GetDisplayName() override;
-
-        // Gui Abstraction Layer
-
         void RenderDebugFrame() override;
 
-        // Bluetooth
+        // Ble Endpoint Specific Methods
 
-        inline unsigned char* GetMacAddress()
+        unsigned char* GetMacAddress()
         {
             return m_MacAddress;
         }
 
-        inline NearbyDiscoveredAdvertisementBle* GetAdvertisement()
+        //! @warning @param[in] Advertisement Is being consumed.
+        void SetAdvertisement(NearbyDiscoveredAdvertisementBle* Advertisement, bool FreeOld = true);
+
+        NearbyDiscoveredAdvertisementBle* GetAdvertisement()
         {
             return m_Advertisement;
         }
-
-        static NearbyDiscoveredEndpointUniqueId sfMakeUniqueId(unsigned char* MacAddress);
 
     private:
         unsigned char m_MacAddress[6];

@@ -1,5 +1,6 @@
 #include "NearbyClient/DiscoveredAdvertisements.hpp"
 #include "Ash/AshCRC32.h"
+#include "NearbyClient/DiscoveredEndpointId.hpp"
 #include "NearbyProtocols/ConnectionAdvertisement.h"
 #include "NearbyProtocols/MediumAdvertisement.h"
 #include "NearbyProtocols/ShareAdvertisement.h"
@@ -47,8 +48,6 @@ namespace nearby::client
 
         nearby_connection_advertisement_ble_deserialize(m_Connection, &connectionBuffer, m_Medium->is_fast_advertisement);
 
-        printf("%i\n", m_Connection->endpoint_info_length);
-
         if (connectionBuffer.has_error_occurred == true)
         {
             this->Cleanup();
@@ -94,6 +93,11 @@ namespace nearby::client
         }
 
         return true;
+    }
+
+    NearbyDiscoveredEndpointId NearbyDiscoveredAdvertisementBle::GetEndpointId()
+    {
+        return NearbyDiscoveredEndpointIdUtil::sfMakeBleUUID(m_Connection->endpoint_id);
     }
 
 } // namespace nearby::client
