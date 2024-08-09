@@ -1,7 +1,6 @@
 #ifndef _NEARBYCLIENT_DISCOVEREDENDPOINTS_HPP
 #define _NEARBYCLIENT_DISCOVEREDENDPOINTS_HPP
 
-#include "Ash/AshCRC32.h"
 #include "NearbyClient/DiscoveredAdvertisements.hpp"
 #include "NearbyClient/DiscoveredEndpointId.hpp"
 #include <chrono>

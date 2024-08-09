@@ -4,7 +4,6 @@
 #include "NearbyClient/DiscoveredEndpoints.hpp"
 #include "NearbyLayers/Bluetooth.h"
 #include "NearbyRenderer/Renderer.hpp"
-#include <cstdint>
 #include <map>
 
 namespace nearby::client
@@ -31,7 +30,7 @@ namespace nearby::client
         nearby_layer_bluetooth_t* m_LayerBluetooth;
 
         // Layer Endpoints
-        std::map<uint64_t, NearbyDiscoveredEndpointBase*> m_DiscoveredEndpoints;
+        std::map<NearbyDiscoveredEndpointId, NearbyDiscoveredEndpointBase*> m_DiscoveredEndpoints;
     };
 
 } // namespace nearby::client

@@ -2,6 +2,7 @@ project("NearbyLayers")
 
 file(GLOB NEARBYLAYERS_SOURCE_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/source/*.*
+    ${CMAKE_CURRENT_SOURCE_DIR}/source/*/*.*
 )
 
 add_library(${PROJECT_NAME} STATIC ${NEARBYLAYERS_SOURCE_FILES})

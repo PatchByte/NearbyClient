@@ -17,3 +17,6 @@
 [submodule "Vendors/cppwinrt-cmake"]
 	path = Vendors/cppwinrt-cmake
 	url = https://github.com/cpp-openapi/cppwinrt-cmake
+[submodule "Vendors/cpp-httplib"]
+	path = Vendors/cpp-httplib
+	url = https://github.com/yhirose/cpp-httplib.git

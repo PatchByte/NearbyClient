@@ -1,8 +1,6 @@
 #include "NearbyClient/DiscoveredEndpoints.hpp"
-#include "NearbyClient/DiscoveredEndpointId.hpp"
 #include "NearbyProtocols/MediumAdvertisement.h"
 #include "fmt/chrono.h"
-#include "fmt/compile.h"
 #include "fmt/format.h"
 #include "imgui.h"
 #include <chrono>
