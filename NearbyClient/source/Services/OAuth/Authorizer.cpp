@@ -96,7 +96,7 @@ namespace nearby::client::services
                           {
                               m_Code = code;
 
-                              Response.set_content("<html><body><h1>Close this now.</h1><script>window.close();</script></body></html>", "text/html");
+                              Response.set_content("<!DOCTYPE html><html><body><h1>Close this now, you can go back into the application.</h1></body></html>", "text/html");
 
                               std::ignore = std::async(std::launch::async, [](httplib::Server* Server) { Server->stop(); }, m_Server);
 
