@@ -11,4 +11,6 @@ if(WIN32)
 	add_subdirectory("cppwinrt-cmake")
 endif()
 
+add_subdirectory("json")
+
 include("ImGui.cmake")

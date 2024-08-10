@@ -20,3 +20,6 @@
 [submodule "Vendors/cpp-httplib"]
 	path = Vendors/cpp-httplib
 	url = https://github.com/yhirose/cpp-httplib.git
+[submodule "Vendors/json"]
+	path = Vendors/json
+	url = https://github.com/nlohmann/json.git
