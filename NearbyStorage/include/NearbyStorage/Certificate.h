@@ -2,6 +2,7 @@
 #define _NEARBYSTORAGE_CERTIFICATE_H
 
 #include <stdbool.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -28,6 +29,12 @@ extern "C"
 
     struct nearby_storage_public_certificate* nearby_storage_public_certificate_create();
     void nearby_storage_public_certificate_destroy(struct nearby_storage_public_certificate* instance);
+    uint64_t nearby_storage_public_certificate_get_hash(struct nearby_storage_public_certificate* instance);
+    void nearby_storage_public_certificate_set_secret_id(struct nearby_storage_public_certificate* instance, unsigned char* data, unsigned long long length);
+    void nearby_storage_public_certificate_set_secret_key(struct nearby_storage_public_certificate* instance, unsigned char* data, unsigned long long length);
+    void nearby_storage_public_certificate_set_public_key(struct nearby_storage_public_certificate* instance, unsigned char* data, unsigned long long length);
+    void nearby_storage_public_certificate_set_metadata_encryption_key(struct nearby_storage_public_certificate* instance, unsigned char* data, unsigned long long length);
+    void nearby_storage_public_certificate_set_metadata_encryption_key_tag(struct nearby_storage_public_certificate* instance, unsigned char* data, unsigned long long length);
 
 #ifdef __cplusplus
 }

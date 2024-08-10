@@ -1,6 +1,25 @@
 #include "NearbyStorage/Certificate.h"
+#include "NearbyStorage/HashMap.h"
 #include <malloc.h>
 #include <string.h>
+
+#define NEARBY_STORAGE_PUBLIC_CERTIFICATE_IMPLEMENT_FIELD(n)                                                                                           \
+    void nearby_storage_public_certificate_set_##n(struct nearby_storage_public_certificate* instance, unsigned char* data, unsigned long long length) \
+    {                                                                                                                                                  \
+        if (instance->n##_data)                                                                                                                        \
+        {                                                                                                                                              \
+            free(instance->n##_data);                                                                                                                  \
+            instance->n##_data = NULL;                                                                                                                 \
+            instance->n##_length = 0;                                                                                                                  \
+        }                                                                                                                                              \
+                                                                                                                                                       \
+        if (data || length > 0)                                                                                                                        \
+        {                                                                                                                                              \
+            instance->n##_data = malloc(length);                                                                                                       \
+            instance->n##_length = length;                                                                                                             \
+            memcpy(instance->n##_data, data, length);                                                                                                  \
+        }                                                                                                                                              \
+    }
 
 struct nearby_storage_public_certificate* nearby_storage_public_certificate_create()
 {
@@ -40,3 +59,14 @@ void nearby_storage_public_certificate_destroy(struct nearby_storage_public_cert
 
     free(instance);
 }
+
+uint64_t nearby_storage_public_certificate_get_hash(struct nearby_storage_public_certificate* instance)
+{
+    return hashmap_sip(instance->secret_id_data, instance->secret_id_length, 0, 0);
+}
+
+NEARBY_STORAGE_PUBLIC_CERTIFICATE_IMPLEMENT_FIELD(secret_id);
+NEARBY_STORAGE_PUBLIC_CERTIFICATE_IMPLEMENT_FIELD(secret_key);
+NEARBY_STORAGE_PUBLIC_CERTIFICATE_IMPLEMENT_FIELD(public_key);
+NEARBY_STORAGE_PUBLIC_CERTIFICATE_IMPLEMENT_FIELD(metadata_encryption_key);
+NEARBY_STORAGE_PUBLIC_CERTIFICATE_IMPLEMENT_FIELD(metadata_encryption_key_tag);
