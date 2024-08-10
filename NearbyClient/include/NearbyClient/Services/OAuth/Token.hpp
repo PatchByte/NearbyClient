@@ -3,8 +3,8 @@
 
 #include "nlohmann/json_fwd.hpp"
 #include <cstdint>
-#include <string>
 #include <nlohmann/json.hpp>
+#include <string>
 
 namespace nearby::client::services
 {
@@ -12,6 +12,10 @@ namespace nearby::client::services
     class OAuthToken
     {
     public:
+        inline OAuthToken() : m_IdToken(), m_Scope(), m_RefreshToken(), m_AccessToken(), m_ExpireTimeStamp()
+        {
+        }
+
         inline OAuthToken(std::string AccessToken, std::string RefreshToken, uint64_t ExpireTimeStamp, std::string Scope, std::string TokenType, std::string IdToken)
             : m_AccessToken(AccessToken), m_RefreshToken(RefreshToken), m_ExpireTimeStamp(ExpireTimeStamp), m_Scope(Scope), m_TokenType(TokenType), m_IdToken(IdToken)
         {
@@ -47,6 +51,8 @@ namespace nearby::client::services
             return m_IdToken;
         }
 
+        bool IsExpired();
+
         // This is a method to import the contents of the `https://oauth2.googleapis.com/token`
         bool ImportFromGoogleTokenResponse(nlohmann::json Data, bool IsRefreshTokenResponse = false);
         // This is a custom method to import
@@ -54,6 +60,8 @@ namespace nearby::client::services
         // This is a custom method to export
         nlohmann::json Export();
 
+        bool RequestTokenFromCode(std::string ClientId, std::string ClientSecret, std::string RedirectUri, std::string Code);
+        bool RefreshToken(std::string ClientId, std::string ClientSecret);
     private:
         std::string m_AccessToken;
         std::string m_RefreshToken;

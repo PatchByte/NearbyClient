@@ -58,11 +58,7 @@ void* nearby_layer_bluetooth_thread_entry(void* parameter)
 
     instance->is_scanning = true;
 
-    printf("Start\n");
-
     nearby_layer_bluetooth_thread(instance);
-
-    printf("Stop\n");
 
     hci_close_dev(instance->hci_device);
 

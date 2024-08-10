@@ -1,13 +1,21 @@
 #include "NearbyClient/Client.hpp"
+#include "AshLogger/AshLoggerPassage.h"
+#include "AshLogger/AshLoggerTag.h"
 #include "NearbyClient/DiscoveredAdvertisements.hpp"
 #include "NearbyClient/DiscoveredEndpointId.hpp"
 #include "NearbyClient/DiscoveredEndpoints.hpp"
+#include "NearbyClient/Services/OAuth/Token.hpp"
+#include "NearbyClient/Services/Variables.hpp"
 #include "NearbyLayers/Bluetooth.h"
 #include "NearbyRenderer/Renderer.hpp"
+#include "fmt/format.h"
+#include "fmt/chrono.h"
 #include "imgui.h"
 #include <chrono>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
+#include <filesystem>
 #include <future>
 #include <thread>
 #include <utility>
@@ -18,12 +26,26 @@ namespace nearby::client
 
     static std::chrono::seconds smEndpointTimeoutBle = std::chrono::seconds(2);
 
-    NearbyClient::NearbyClient() : m_Renderer(nullptr), m_LayerBluetooth(nullptr), m_DiscoveredEndpoints()
+    NearbyClient::NearbyClient()
+        : m_Logger("NearbyClient", {}), m_Renderer(nullptr), m_BucketPath(), m_Bucket(), m_OAuthorizer([this](services::OAuthToken Token) { OnReceivedOAuthToken(Token); }), m_LayerBluetooth(nullptr),
+          m_DiscoveredEndpoints()
     {
+        m_Logger.AddLoggerPassage(
+            new ash::AshLoggerFunctionPassage([](ash::AshLoggerDefaultPassage* This, ash::AshLoggerTag Tag, std::string Format, fmt::format_args Args, std::string FormattedString)
+                                              { std::cout << This->GetParent()->GetPrefixFunction()(Tag, Format, Args) << " " << FormattedString << std::endl; }));
+
+        m_Logger.SetPrefixFunction([] (ash::AshLoggerTag LoggerTag, std::string LoggerFormat, fmt::format_args LoggerFormatArgs) -> std::string {
+            return fmt::format("[{}/{}/{}]", "Nearby", LoggerTag.GetPrefix(), std::chrono::system_clock::now());
+        });
     }
 
     void NearbyClient::Run()
     {
+        // Bucket
+
+        m_BucketPath = std::filesystem::current_path() / "Bucket.json";
+        m_Bucket.LoadFromFile(m_BucketPath);
+
         // BLE
 
         m_LayerBluetooth = nearby_layer_bluetooth_create();
@@ -46,6 +68,30 @@ namespace nearby::client
         // Start scanning by default
         nearby_layer_bluetooth_start_scanning(m_LayerBluetooth);
 
+        // Google Services
+
+        if (m_Bucket.HasToken() == false)
+        {
+            m_OAuthorizer.Start();
+
+#if _WIN32
+            std::string cmdPrefix = "start";
+#else
+            std::string cmdPrefix = "xdg-open";
+#endif
+
+            std::system(fmt::format("{} \"{}\"", cmdPrefix, m_OAuthorizer.GetBrowserLoginUrl()).c_str());
+
+            while (m_Bucket.HasToken() == false)
+            {
+                std::this_thread::yield();
+            }
+        }
+        else
+        {
+            m_Logger.Log("Debug", "Loading OAuth Token from file");
+        }
+
         // Renderer
 
         m_Renderer = new renderer::NearbyRendererVulkan(800, 600, "NearbyClient");
@@ -59,6 +105,12 @@ namespace nearby::client
             // Move this into another thread
 
             CheckForLostEndpointsAndCleanup();
+
+            if(m_Bucket.GetToken().IsExpired())
+            {
+                m_Logger.Log("Warning", "Refreshing token");
+                m_Bucket.GetToken().RefreshToken(std::string(services::Variables::smClientId), std::string(services::Variables::smClientSecret));
+            }
 
             // Actual render stuff
 
@@ -76,6 +128,15 @@ namespace nearby::client
         // BLE
 
         nearby_layer_bluetooth_destroy(m_LayerBluetooth);
+
+        // Bucket
+
+        SaveBucket();
+    }
+
+    void NearbyClient::SaveBucket()
+    {
+        m_Bucket.SaveToFile(m_BucketPath);
     }
 
     void NearbyClient::RenderGui()
@@ -129,6 +190,14 @@ namespace nearby::client
             }
         }
         ImGui::End();
+    }
+
+    void NearbyClient::OnReceivedOAuthToken(services::OAuthToken Token)
+    {
+        m_Logger.Log("Info", "Received OAuth Token, saving to file");
+
+        m_Bucket.SetToken(Token);
+        SaveBucket();
     }
 
     void NearbyClient::CheckForLostEndpointsAndCleanup()
