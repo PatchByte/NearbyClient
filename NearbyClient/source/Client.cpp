@@ -8,8 +8,8 @@
 #include "NearbyClient/Services/Variables.hpp"
 #include "NearbyLayers/Bluetooth.h"
 #include "NearbyRenderer/Renderer.hpp"
-#include "fmt/format.h"
 #include "fmt/chrono.h"
+#include "fmt/format.h"
 #include "imgui.h"
 #include <chrono>
 #include <cstdio>
@@ -34,9 +34,8 @@ namespace nearby::client
             new ash::AshLoggerFunctionPassage([](ash::AshLoggerDefaultPassage* This, ash::AshLoggerTag Tag, std::string Format, fmt::format_args Args, std::string FormattedString)
                                               { std::cout << This->GetParent()->GetPrefixFunction()(Tag, Format, Args) << " " << FormattedString << std::endl; }));
 
-        m_Logger.SetPrefixFunction([] (ash::AshLoggerTag LoggerTag, std::string LoggerFormat, fmt::format_args LoggerFormatArgs) -> std::string {
-            return fmt::format("[{}/{}/{}]", "Nearby", LoggerTag.GetPrefix(), std::chrono::system_clock::now());
-        });
+        m_Logger.SetPrefixFunction([](ash::AshLoggerTag LoggerTag, std::string LoggerFormat, fmt::format_args LoggerFormatArgs) -> std::string
+                                   { return fmt::format("[{}/{}/{}]", "Nearby", LoggerTag.GetPrefix(), std::chrono::system_clock::now()); });
     }
 
     void NearbyClient::Run()
@@ -90,6 +89,7 @@ namespace nearby::client
         else
         {
             m_Logger.Log("Debug", "Loading OAuth Token from file");
+            m_Logger.Log("Warning", "OAuth Token will expire in {} seconds.", m_Bucket.GetToken().GetSecondsWillExpireIn());
         }
 
         // Renderer
@@ -106,7 +106,7 @@ namespace nearby::client
 
             CheckForLostEndpointsAndCleanup();
 
-            if(m_Bucket.GetToken().IsExpired())
+            if (m_Bucket.GetToken().IsExpired())
             {
                 m_Logger.Log("Warning", "Refreshing token");
                 m_Bucket.GetToken().RefreshToken(std::string(services::Variables::smClientId), std::string(services::Variables::smClientSecret));

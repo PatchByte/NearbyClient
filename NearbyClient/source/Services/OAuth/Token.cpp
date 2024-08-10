@@ -12,6 +12,16 @@ namespace nearby::client::services
         return time(nullptr) > m_ExpireTimeStamp;
     }
 
+    uint64_t OAuthToken::GetSecondsWillExpireIn()
+    {
+        if (IsExpired())
+        {
+            return 0;
+        }
+
+        return m_ExpireTimeStamp - time(nullptr);
+    }
+
     bool OAuthToken::ImportFromGoogleTokenResponse(nlohmann::json Data, bool IsRefreshTokenResponse)
     {
         std::vector<std::string> requiredFields = {"access_token", "expires_in", "scope", "token_type", "id_token"};
@@ -96,7 +106,7 @@ namespace nearby::client::services
 
         auto res = client.Post("/token", dataSerialized, "application/json");
 
-        if(res->status != 200)
+        if (res->status != 200)
         {
             return false;
         }
@@ -119,7 +129,7 @@ namespace nearby::client::services
 
         auto res = client.Post("/token", dataSerialized, "application/json");
 
-        if(res->status != 200)
+        if (res->status != 200)
         {
             return false;
         }

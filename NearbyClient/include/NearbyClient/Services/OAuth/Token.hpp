@@ -52,6 +52,7 @@ namespace nearby::client::services
         }
 
         bool IsExpired();
+        uint64_t GetSecondsWillExpireIn();
 
         // This is a method to import the contents of the `https://oauth2.googleapis.com/token`
         bool ImportFromGoogleTokenResponse(nlohmann::json Data, bool IsRefreshTokenResponse = false);
