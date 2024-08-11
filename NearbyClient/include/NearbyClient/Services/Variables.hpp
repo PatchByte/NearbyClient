@@ -1,6 +1,7 @@
 #ifndef _NEARBYCLIENT_SERVICES_NEARBYSHARE_HPP
 #define _NEARBYCLIENT_SERVICES_NEARBYSHARE_HPP
 
+#include <string>
 #include <string_view>
 
 namespace nearby::client::services
@@ -14,8 +15,8 @@ namespace nearby::client::services
     class Variables
     {
     public:
-        static constexpr std::string_view smClientId = "42772952914-vtl1fjgor0h79faaqd4jc3v3lu4o4l4f.apps.googleusercontent.com";
-        static constexpr std::string_view smClientSecret = "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";
+        static std::string GetClientId();
+        static std::string GetClientSecret();
     };
 
 } // namespace nearby::client::services

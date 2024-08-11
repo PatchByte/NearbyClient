@@ -109,7 +109,7 @@ namespace nearby::client
             if (m_Bucket.GetToken().IsExpired())
             {
                 m_Logger.Log("Warning", "Refreshing token");
-                m_Bucket.GetToken().RefreshToken(std::string(services::Variables::smClientId), std::string(services::Variables::smClientSecret));
+                m_Bucket.GetToken().RefreshToken(services::Variables::GetClientId(), services::Variables::GetClientSecret());
             }
 
             // Actual render stuff

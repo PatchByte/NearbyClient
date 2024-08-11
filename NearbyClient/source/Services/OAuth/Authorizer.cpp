@@ -80,7 +80,7 @@ namespace nearby::client::services
                            "oauthchooseaccount?client_id={}&redirect_uri=http%3A%2F%2F127.0.0.1%3A{}%2Fcallback&state="
                            "{}&scope=email%20profile%20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fnearbysharing-pa%20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fexperimentsandconfigs%"
                            "20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcloudplatformprojects&response_type=code&prompt=consent&access_type=offline&service=lso&o2v=1&ddm=0&flowName=GeneralOAuthFlow",
-                           Variables::smClientId, m_Port, m_State);
+                           Variables::GetClientId(), m_Port, m_State);
     }
 
     void OAuthorizer::Thread()
@@ -110,7 +110,7 @@ namespace nearby::client::services
 
         OAuthToken token = OAuthToken();
 
-        if(token.RequestTokenFromCode(std::string(Variables::smClientId), std::string(Variables::smClientSecret), fmt::format("http://127.0.0.1:{}/callback", m_Port), m_Code) == true)
+        if(token.RequestTokenFromCode(Variables::GetClientId(), Variables::GetClientSecret(), fmt::format("http://127.0.0.1:{}/callback", m_Port), m_Code) == true)
         {
             m_ReceivedOAuthToken(token);
         }
