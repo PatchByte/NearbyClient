@@ -1,4 +1,5 @@
 #include "NearbyClient/Client.hpp"
+#include "Ash/AshCRC32.h"
 #include "AshLogger/AshLoggerPassage.h"
 #include "AshLogger/AshLoggerTag.h"
 #include "NearbyClient/DiscoveredAdvertisements.hpp"
@@ -8,6 +9,8 @@
 #include "NearbyClient/Services/Variables.hpp"
 #include "NearbyLayers/Bluetooth.h"
 #include "NearbyRenderer/Renderer.hpp"
+#include "NearbyStorage/Certificate.h"
+#include "NearbyStorage/CertificateManager.h"
 #include "fmt/chrono.h"
 #include "fmt/format.h"
 #include "imgui.h"
@@ -28,7 +31,7 @@ namespace nearby::client
 
     NearbyClient::NearbyClient()
         : m_Logger("NearbyClient", {}), m_Renderer(nullptr), m_BucketPath(), m_Bucket(), m_OAuthorizer([this](services::OAuthToken Token) { OnReceivedOAuthToken(Token); }), m_NearbyShare(m_Logger),
-          m_LayerBluetooth(nullptr), m_DiscoveredEndpoints()
+          m_CertificateManager(nearby_storage_certificate_manager_create()), m_LayerBluetooth(nullptr), m_DiscoveredEndpoints()
     {
         m_Logger.AddLoggerPassage(
             new ash::AshLoggerFunctionPassage([](ash::AshLoggerDefaultPassage* This, ash::AshLoggerTag Tag, std::string Format, fmt::format_args Args, std::string FormattedString)
@@ -93,7 +96,6 @@ namespace nearby::client
 
             OnReceivedOAuthToken(m_Bucket.GetToken());
             CheckIfNeedToRefreshToken();
-
         }
 
         this->FetchPublicCertificates();
@@ -175,18 +177,46 @@ namespace nearby::client
 
             if (ImGui::TreeNode("Debug"))
             {
-                for (auto currentDiscoveredEndpointIterator : m_DiscoveredEndpoints)
+                if (ImGui::TreeNode("Public Certificates"))
                 {
-                    auto currentMetadata = currentDiscoveredEndpointIterator.second->GetMetadata();
+                    nearby_storage_certificate_manager_iterate_public_certificates(
+                        this->m_CertificateManager,
+                        [](nearby_storage_public_certificate* PublicCertificate, void*) -> bool
+                        {
+                            ash::AshCRC32 secretIdCrc = ash::AshCRC32();
+                            secretIdCrc.Update(PublicCertificate->secret_id_data, PublicCertificate->secret_id_length);
 
-                    if (ImGui::TreeNode(currentMetadata.m_Display.data()))
-                    {
-                        currentDiscoveredEndpointIterator.second->RenderDebugFrame();
+                            std::string label = fmt::format("{:04x}", secretIdCrc.GetValue());
 
-                        ImGui::TreePop();
-                    }
+                            if (ImGui::TreeNode(label.data()))
+                            {
+                                ImGui::Text("Start Time: %s\n", fmt::format("{:%c}", fmt::localtime(PublicCertificate->start_time)).data());
+                                ImGui::Text("End Time: %s\n", fmt::format("{:%c}", fmt::localtime(PublicCertificate->end_time)).data());
+
+                                ImGui::TreePop();
+                            }
+
+                            return true;
+                        },
+                        nullptr);
+
+                    ImGui::TreePop();
                 }
+                if (ImGui::TreeNode("Endpoints"))
+                {
+                    for (auto currentDiscoveredEndpointIterator : m_DiscoveredEndpoints)
+                    {
+                        auto currentMetadata = currentDiscoveredEndpointIterator.second->GetMetadata();
 
+                        if (ImGui::TreeNode(currentMetadata.m_Display.data()))
+                        {
+                            currentDiscoveredEndpointIterator.second->RenderDebugFrame();
+
+                            ImGui::TreePop();
+                        }
+                    }
+                    ImGui::TreePop();
+                }
                 ImGui::TreePop();
             }
         }
@@ -205,20 +235,28 @@ namespace nearby::client
 
     void NearbyClient::CheckIfNeedToRefreshToken()
     {
-        if(m_Bucket.GetToken().IsExpired())
+        if (m_Bucket.GetToken().IsExpired())
         {
-        if (m_Bucket.GetToken().RefreshToken(services::Variables::GetClientId(), services::Variables::GetClientSecret()))
-        {
-            m_Logger.Log("Info", "Successfully refreshed token.");
+            if (m_Bucket.GetToken().RefreshToken(services::Variables::GetClientId(), services::Variables::GetClientSecret()))
+            {
+                m_Logger.Log("Info", "Successfully refreshed token.");
 
-            OnReceivedOAuthToken(m_Bucket.GetToken());
-        }
+                OnReceivedOAuthToken(m_Bucket.GetToken());
+            }
         }
     }
 
     void NearbyClient::FetchPublicCertificates()
     {
-        m_NearbyShare.ListPublicCertificates();
+        auto certificates = m_NearbyShare.ListPublicCertificates();
+
+        for (nearby_storage_public_certificate* currentCertificate : certificates.m_Ceritficates)
+        {
+            if (nearby_storage_certificate_manager_get_public_certificate(this->m_CertificateManager, currentCertificate->secret_id_data, currentCertificate->secret_id_length) == nullptr)
+            {
+                nearby_storage_certificate_manager_add_public_certificate(this->m_CertificateManager, currentCertificate);
+            }
+        }
     }
 
     void NearbyClient::CheckForLostEndpointsAndCleanup()

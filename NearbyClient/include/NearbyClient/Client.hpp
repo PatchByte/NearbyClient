@@ -8,6 +8,7 @@
 #include "NearbyClient/Services/OAuth/Token.hpp"
 #include "NearbyLayers/Bluetooth.h"
 #include "NearbyRenderer/Renderer.hpp"
+#include "NearbyStorage/CertificateManager.h"
 #include <AshLogger/AshLogger.h>
 #include <map>
 
@@ -45,6 +46,7 @@ namespace nearby::client
 
         // Services
         services::NearbyShare m_NearbyShare;
+        nearby_storage_certificate_manager* m_CertificateManager;
 
         // Layers
         nearby_layer_bluetooth_t* m_LayerBluetooth;
