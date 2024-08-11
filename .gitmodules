@@ -23,3 +23,6 @@
 [submodule "Vendors/json"]
 	path = Vendors/json
 	url = https://github.com/nlohmann/json.git
+[submodule "Vendors/nanopb"]
+	path = Vendors/nanopb
+	url = https://github.com/nanopb/nanopb.git
