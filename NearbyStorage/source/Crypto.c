@@ -3,10 +3,17 @@
 #include "openssl/kdf.h"
 #include <openssl/err.h>
 #include <openssl/evp.h>
+#include <openssl/ssl.h>
 
 #define error_crypto(x)                              \
     printf("error while %s: %s\n", __FUNCTION__, x); \
     exit(-1);
+
+#define handleErrors()                                          \
+    {                                                           \
+        printf("error while %s: %i\n", __FUNCTION__, __LINE__); \
+        exit(-1);                                               \
+    }
 
 int nearby_storage_hkdf_sha256(unsigned char* secret_data, unsigned long long secret_length, unsigned char* salt_data, unsigned long long salt_length, unsigned char* info_data,
                                unsigned long long info_length, unsigned char* derived_key_data, size_t* derived_key_size)
@@ -66,7 +73,7 @@ int nearby_storage_hkdf_sha256(unsigned char* secret_data, unsigned long long se
     return 1;
 }
 
-int nearby_storage_aes_ctr_decrypt(unsigned char* encrypted_data, unsigned long long encrypted_length, unsigned char* key, unsigned char* iv, unsigned char* decrypted_buffer)
+int nearby_storage_aes_ctr_256_decrypt(unsigned char* encrypted_data, unsigned long long encrypted_length, unsigned char* key, unsigned char* iv, unsigned char* decrypted_buffer)
 {
 #if 0
     // BoringSSL implementation if needed again.
@@ -90,16 +97,19 @@ int nearby_storage_aes_ctr_decrypt(unsigned char* encrypted_data, unsigned long 
 
     if (EVP_DecryptInit_ex(ctx, EVP_aes_256_ctr(), NULL, key, iv) != 1)
     {
+        EVP_CIPHER_CTX_free(ctx);
         return -1;
     }
 
     if (EVP_DecryptUpdate(ctx, decrypted_buffer, &outlen, encrypted_data, encrypted_length) != 1)
     {
+        EVP_CIPHER_CTX_free(ctx);
         return -1;
     }
 
-    if (1 != EVP_DecryptFinal_ex(ctx, decrypted_buffer + outlen, &tmplen))
+    if (EVP_DecryptFinal_ex(ctx, decrypted_buffer + outlen, &tmplen) != 1)
     {
+        EVP_CIPHER_CTX_free(ctx);
         return -1;
     }
 
@@ -108,4 +118,100 @@ int nearby_storage_aes_ctr_decrypt(unsigned char* encrypted_data, unsigned long 
 #endif
 
     return encrypted_length;
+}
+
+// Stolen from https://wiki.openssl.org/index.php/EVP_Authenticated_Encryption_and_Decryption
+int nearby_storage_aes_gcm_256_decrypt(unsigned char* encrypted_data, int encrypted_length, unsigned char* aad, int aad_length, unsigned char* tag, unsigned char* key, unsigned char* iv,
+                                       unsigned char* decrypted_data)
+{
+    /*
+    printf("encrypted_data:\n");
+    for (int i = 0; i < encrypted_length; i++)
+    {
+        printf("%02x ", encrypted_data[i]);
+    }
+    printf("\n");
+
+    printf("key:\n");
+    for (int i = 0; i < 32; i++)
+    {
+        printf("%02x ", key[i]);
+    }
+    printf("\n");
+
+    printf("iv:\n");
+    for (int i = 0; i < 12; i++)
+    {
+        printf("%02x ", iv[i]);
+    }
+    printf("\n");
+    */
+
+    EVP_CIPHER_CTX* ctx;
+    int len;
+    int plaintext_len;
+    int ret;
+
+    /* Create and initialise the context */
+    if (!(ctx = EVP_CIPHER_CTX_new()))
+        handleErrors();
+
+    /* Initialise the decryption operation. */
+    if (!EVP_DecryptInit_ex(ctx, EVP_aes_256_gcm(), NULL, NULL, NULL))
+        handleErrors();
+
+    /* Set IV length. Not necessary if this is 12 bytes (96 bits) */
+    if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, 12, NULL))
+        handleErrors();
+
+    /* Initialise key and IV */
+    if (!EVP_DecryptInit_ex(ctx, NULL, NULL, key, iv))
+        handleErrors();
+
+    /*
+     * Provide the message to be decrypted, and obtain the plaintext output.
+     * EVP_DecryptUpdate can be called multiple times if necessary
+     */
+    EVP_CIPHER_CTX_set_padding(ctx, 0);
+
+    if (!EVP_DecryptUpdate(ctx, decrypted_data, &len, encrypted_data, encrypted_length))
+        handleErrors();
+    plaintext_len = len;
+
+    unsigned char dummy_tag[16] = {};
+
+    if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, 16, dummy_tag))
+    {
+        ERR_print_errors_fp(stderr);
+    }
+
+    /*
+     * Finalise the decryption. A positive return value indicates success,
+     * anything else is a failure - the plaintext is not trustworthy.
+     */
+
+    ret = EVP_DecryptFinal_ex(ctx, decrypted_data + len, &len);
+
+    if (ret == 0)
+    {
+        ERR_print_errors_fp(stderr);
+    }
+
+    printf("ret: %i\n", ret);
+
+    /* Clean up */
+    EVP_CIPHER_CTX_free(ctx);
+
+    if (ret > 0)
+    {
+        /* Success */
+        plaintext_len += len;
+        return plaintext_len;
+    }
+    else
+    {
+
+        /* Verify failed */
+        return plaintext_len;
+    }
 }

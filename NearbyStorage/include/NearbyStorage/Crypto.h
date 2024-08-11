@@ -15,6 +15,12 @@ int nearby_storage_hkdf_sha256(unsigned char* secret_data, unsigned long long se
  * @param[out] decrypted_buffer
  * @return The return is the length. -1 if failed.
  */
-int nearby_storage_aes_ctr_decrypt(unsigned char* encrypted_data, unsigned long long encrypted_length, unsigned char* key, unsigned char* iv, unsigned char* decrypted_buffer);
+int nearby_storage_aes_ctr_256_decrypt(unsigned char* encrypted_data, unsigned long long encrypted_length, unsigned char* key, unsigned char* iv, unsigned char* decrypted_buffer);
+
+/*!
+ * @param[out] decrypted_data
+ */
+int nearby_storage_aes_gcm_256_decrypt(unsigned char* encrypted_data, int encrypted_length, unsigned char* aad, int aad_length, unsigned char* tag, unsigned char* key, unsigned char* iv,
+                                       unsigned char* decrypted_data);
 
 #endif // !_NEARBYSTORAGE_CRYPTO_H
