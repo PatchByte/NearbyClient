@@ -111,6 +111,13 @@ namespace nearby::client::services
                 auto encryptedMetadataBytes = pb_get_bytes_for_decode_callback(&protoPublicCertificate->encrypted_metadata_bytes);
                 auto metadataEncryptionKeyTag = pb_get_bytes_for_decode_callback(&protoPublicCertificate->metadata_encryption_key_tag);
 
+                parsedPublicCertificate->start_time = protoPublicCertificate->start_time.seconds;
+                parsedPublicCertificate->has_start_time = protoPublicCertificate->has_start_time;
+                parsedPublicCertificate->end_time = protoPublicCertificate->end_time.seconds;
+                parsedPublicCertificate->has_end_time = protoPublicCertificate->has_end_time;
+                parsedPublicCertificate->for_selected_contacts = protoPublicCertificate->for_selected_contacts;
+                parsedPublicCertificate->for_self_share = protoPublicCertificate->for_self_share;
+
                 nearby_storage_public_certificate_set_secret_id(parsedPublicCertificate, secretIdBytes.data(), secretIdBytes.size());
                 nearby_storage_public_certificate_set_secret_key(parsedPublicCertificate, secretKeyBytes.data(), secretKeyBytes.size());
                 nearby_storage_public_certificate_set_public_key(parsedPublicCertificate, publicKeyBytes.data(), publicKeyBytes.size());

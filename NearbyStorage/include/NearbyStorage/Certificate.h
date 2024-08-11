@@ -18,7 +18,9 @@ extern "C"
         unsigned char* public_key_data;
         unsigned long long public_key_length;
         unsigned long long start_time;
+        bool has_start_time;
         unsigned long long end_time;
+        bool has_end_time;
         bool for_selected_contacts;
         unsigned char* metadata_encryption_key_data;
         unsigned long long metadata_encryption_key_length;
