@@ -8,8 +8,8 @@ file(GLOB NEARBYCLIENT_SOURCE_FILES
 
 add_executable(${PROJECT_NAME} ${NEARBYCLIENT_SOURCE_FILES})
 
-target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_link_libraries(${PROJECT_NAME} PRIVATE Ash::Ash AshLogger::AshLogger NearbyRenderer::NearbyRenderer NearbyLayers::NearbyLayers NearbyProtocols::NearbyProtocols fmt::fmt nlohmann_json::nlohmann_json httplib::httplib)
+target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include ${NANOPB_INCLUDE_DIRS})
+target_link_libraries(${PROJECT_NAME} PRIVATE Ash::Ash AshLogger::AshLogger NearbyRenderer::NearbyRenderer NearbyLayers::NearbyLayers NearbyProtocols::NearbyProtocols NearbyStorage::NearbyStorage fmt::fmt nlohmann_json::nlohmann_json httplib::httplib protobuf-nanopb-static nanopb-extension::nanopb-extension NearbyProto::NearbyProto)
 
 add_custom_command(
     TARGET ${PROJECT_NAME} POST_BUILD

@@ -52,6 +52,11 @@ void nearby_storage_public_certificate_destroy(struct nearby_storage_public_cert
         free(instance->metadata_encryption_key_data);
     }
 
+    if (instance->encrypted_metadata_bytes_data != NULL)
+    {
+        free(instance->encrypted_metadata_bytes_data);
+    }
+
     if (instance->metadata_encryption_key_tag_data != NULL)
     {
         free(instance->metadata_encryption_key_tag_data);
@@ -69,4 +74,5 @@ NEARBY_STORAGE_PUBLIC_CERTIFICATE_IMPLEMENT_FIELD(secret_id);
 NEARBY_STORAGE_PUBLIC_CERTIFICATE_IMPLEMENT_FIELD(secret_key);
 NEARBY_STORAGE_PUBLIC_CERTIFICATE_IMPLEMENT_FIELD(public_key);
 NEARBY_STORAGE_PUBLIC_CERTIFICATE_IMPLEMENT_FIELD(metadata_encryption_key);
+NEARBY_STORAGE_PUBLIC_CERTIFICATE_IMPLEMENT_FIELD(encrypted_metadata_bytes);
 NEARBY_STORAGE_PUBLIC_CERTIFICATE_IMPLEMENT_FIELD(metadata_encryption_key_tag);

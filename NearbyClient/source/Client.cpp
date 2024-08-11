@@ -27,8 +27,8 @@ namespace nearby::client
     static std::chrono::seconds smEndpointTimeoutBle = std::chrono::seconds(2);
 
     NearbyClient::NearbyClient()
-        : m_Logger("NearbyClient", {}), m_Renderer(nullptr), m_BucketPath(), m_Bucket(), m_OAuthorizer([this](services::OAuthToken Token) { OnReceivedOAuthToken(Token); }), m_LayerBluetooth(nullptr),
-          m_DiscoveredEndpoints()
+        : m_Logger("NearbyClient", {}), m_Renderer(nullptr), m_BucketPath(), m_Bucket(), m_OAuthorizer([this](services::OAuthToken Token) { OnReceivedOAuthToken(Token); }), m_NearbyShare(m_Logger),
+          m_LayerBluetooth(nullptr), m_DiscoveredEndpoints()
     {
         m_Logger.AddLoggerPassage(
             new ash::AshLoggerFunctionPassage([](ash::AshLoggerDefaultPassage* This, ash::AshLoggerTag Tag, std::string Format, fmt::format_args Args, std::string FormattedString)
@@ -90,7 +90,13 @@ namespace nearby::client
         {
             m_Logger.Log("Debug", "Loading OAuth Token from file");
             m_Logger.Log("Warning", "OAuth Token will expire in {} seconds.", m_Bucket.GetToken().GetSecondsWillExpireIn());
+
+            OnReceivedOAuthToken(m_Bucket.GetToken());
+            CheckIfNeedToRefreshToken();
+
         }
+
+        this->FetchPublicCertificates();
 
         // Renderer
 
@@ -105,12 +111,7 @@ namespace nearby::client
             // Move this into another thread
 
             CheckForLostEndpointsAndCleanup();
-
-            if (m_Bucket.GetToken().IsExpired())
-            {
-                m_Logger.Log("Warning", "Refreshing token");
-                m_Bucket.GetToken().RefreshToken(services::Variables::GetClientId(), services::Variables::GetClientSecret());
-            }
+            CheckIfNeedToRefreshToken();
 
             // Actual render stuff
 
@@ -197,7 +198,27 @@ namespace nearby::client
         m_Logger.Log("Info", "Received OAuth Token, saving to file");
 
         m_Bucket.SetToken(Token);
+        m_NearbyShare.SetToken(Token);
+
         SaveBucket();
+    }
+
+    void NearbyClient::CheckIfNeedToRefreshToken()
+    {
+        if(m_Bucket.GetToken().IsExpired())
+        {
+        if (m_Bucket.GetToken().RefreshToken(services::Variables::GetClientId(), services::Variables::GetClientSecret()))
+        {
+            m_Logger.Log("Info", "Successfully refreshed token.");
+
+            OnReceivedOAuthToken(m_Bucket.GetToken());
+        }
+        }
+    }
+
+    void NearbyClient::FetchPublicCertificates()
+    {
+        m_NearbyShare.ListPublicCertificates();
     }
 
     void NearbyClient::CheckForLostEndpointsAndCleanup()

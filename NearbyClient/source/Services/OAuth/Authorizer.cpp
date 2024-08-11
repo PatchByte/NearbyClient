@@ -12,7 +12,7 @@ namespace nearby::client::services
 {
     // Too lazy to code
     // Copied from: https://inversepalindrome.com/blog/how-to-create-a-random-string-in-cpp
-    std::string sfRandomString(std::size_t length)
+    static std::string sfRandomString(std::size_t length)
     {
         static constexpr std::string_view smCharacters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 

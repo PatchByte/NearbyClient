@@ -22,6 +22,8 @@ extern "C"
         bool for_selected_contacts;
         unsigned char* metadata_encryption_key_data;
         unsigned long long metadata_encryption_key_length;
+        unsigned char* encrypted_metadata_bytes_data;
+        unsigned long long encrypted_metadata_bytes_length;
         unsigned char* metadata_encryption_key_tag_data;
         unsigned long long metadata_encryption_key_tag_length;
         bool for_self_share;
@@ -34,6 +36,7 @@ extern "C"
     void nearby_storage_public_certificate_set_secret_key(struct nearby_storage_public_certificate* instance, unsigned char* data, unsigned long long length);
     void nearby_storage_public_certificate_set_public_key(struct nearby_storage_public_certificate* instance, unsigned char* data, unsigned long long length);
     void nearby_storage_public_certificate_set_metadata_encryption_key(struct nearby_storage_public_certificate* instance, unsigned char* data, unsigned long long length);
+    void nearby_storage_public_certificate_set_encrypted_metadata_bytes(struct nearby_storage_public_certificate* instance, unsigned char* data, unsigned long long length);
     void nearby_storage_public_certificate_set_metadata_encryption_key_tag(struct nearby_storage_public_certificate* instance, unsigned char* data, unsigned long long length);
 
 #ifdef __cplusplus

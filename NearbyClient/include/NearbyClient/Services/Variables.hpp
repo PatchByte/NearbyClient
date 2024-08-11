@@ -1,5 +1,5 @@
-#ifndef _NEARBYCLIENT_SERVICES_NEARBYSHARE_HPP
-#define _NEARBYCLIENT_SERVICES_NEARBYSHARE_HPP
+#ifndef _NEARBYCLIENT_SERVICES_VARIABLES_HPP
+#define _NEARBYCLIENT_SERVICES_VARIABLES_HPP
 
 #include <string>
 #include <string_view>
@@ -21,4 +21,4 @@ namespace nearby::client::services
 
 } // namespace nearby::client::services
 
-#endif // !_NEARBYCLIENT_SERVICES_NEARBYSHARE_HPP
+#endif // !_NEARBYCLIENT_SERVICES_VARIABLES_HPP

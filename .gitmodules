@@ -26,3 +26,6 @@
 [submodule "Vendors/nanopb"]
 	path = Vendors/nanopb
 	url = https://github.com/nanopb/nanopb.git
+[submodule "Vendors/nanopb-extension"]
+	path = Vendors/nanopb-extension
+	url = https://github.com/PatchByte/nanopb-extension.git

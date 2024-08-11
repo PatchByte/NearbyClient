@@ -3,6 +3,7 @@
 
 #include "NearbyClient/Bucket.hpp"
 #include "NearbyClient/DiscoveredEndpoints.hpp"
+#include "NearbyClient/Services/NearbyShare.hpp"
 #include "NearbyClient/Services/OAuth/Authorizer.hpp"
 #include "NearbyClient/Services/OAuth/Token.hpp"
 #include "NearbyLayers/Bluetooth.h"
@@ -25,6 +26,8 @@ namespace nearby::client
 
         void SaveBucket();
 
+        void CheckIfNeedToRefreshToken();
+        void FetchPublicCertificates();
         void CheckForLostEndpointsAndCleanup();
 
         void OnReceivedOAuthToken(services::OAuthToken Token);
@@ -38,8 +41,10 @@ namespace nearby::client
         Bucket m_Bucket;
 
         // OAuth
-
         services::OAuthorizer m_OAuthorizer;
+
+        // Services
+        services::NearbyShare m_NearbyShare;
 
         // Layers
         nearby_layer_bluetooth_t* m_LayerBluetooth;
