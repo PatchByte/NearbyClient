@@ -190,8 +190,7 @@ namespace nearby::client
 
                             if (ImGui::TreeNode(label.data()))
                             {
-                                ImGui::Text("Start Time: %s\n", fmt::format("{:%c}", fmt::localtime(PublicCertificate->start_time)).data());
-                                ImGui::Text("End Time: %s\n", fmt::format("{:%c}", fmt::localtime(PublicCertificate->end_time)).data());
+                                ImGui::Text("IsInTimeFrame: %s", nearby_storage_public_certificate_is_in_time_frame(PublicCertificate) == true ? "yes" : "no");
 
                                 ImGui::TreePop();
                             }
@@ -211,6 +210,14 @@ namespace nearby::client
                         if (ImGui::TreeNode(currentMetadata.m_Display.data()))
                         {
                             currentDiscoveredEndpointIterator.second->RenderDebugFrame();
+
+                            if (ImGui::Button("Try Decrypt"))
+                            {
+                                auto share = static_cast<NearbyDiscoveredEndpointBle*>(currentDiscoveredEndpointIterator.second)->GetAdvertisement()->GetShare();
+
+                                nearby_storage_certificate_manager_try_decrypt_encrypted_metadata(m_CertificateManager, share->metadata_encryption_key_hash_byte,
+                                                                                                  sizeof(share->metadata_encryption_key_hash_byte), share->salt, sizeof(share->salt));
+                            }
 
                             ImGui::TreePop();
                         }

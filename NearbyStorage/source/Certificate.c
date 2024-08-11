@@ -2,6 +2,7 @@
 #include "NearbyStorage/HashMap.h"
 #include <malloc.h>
 #include <string.h>
+#include <time.h>
 
 #define NEARBY_STORAGE_PUBLIC_CERTIFICATE_IMPLEMENT_FIELD(n)                                                                                           \
     void nearby_storage_public_certificate_set_##n(struct nearby_storage_public_certificate* instance, unsigned char* data, unsigned long long length) \
@@ -68,6 +69,12 @@ void nearby_storage_public_certificate_destroy(struct nearby_storage_public_cert
 uint64_t nearby_storage_public_certificate_get_hash(struct nearby_storage_public_certificate* instance)
 {
     return hashmap_sip(instance->secret_id_data, instance->secret_id_length, 0, 0);
+}
+
+bool nearby_storage_public_certificate_is_in_time_frame(struct nearby_storage_public_certificate* instance)
+{
+    time_t t = time(NULL);
+    return (t > instance->start_time) && (t < instance->end_time);
 }
 
 NEARBY_STORAGE_PUBLIC_CERTIFICATE_IMPLEMENT_FIELD(secret_id);

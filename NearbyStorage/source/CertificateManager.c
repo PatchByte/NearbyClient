@@ -1,9 +1,15 @@
 #include "NearbyStorage/CertificateManager.h"
 #include "NearbyStorage/Certificate.h"
+#include "NearbyStorage/Crypto.h"
 #include "NearbyStorage/HashMap.h"
 #include <malloc.h>
+#include <openssl/evp.h>
+#include <openssl/hmac.h>
 #include <stdint.h>
 #include <string.h>
+
+#define NEARBY_SHARE_KEY_DERIVED_SIZE 16
+#define NEARBY_SHARE_KEY_METADATA_ENCRYPTION_KEY_TAG_SIZE 32
 
 int nearby_storage_public_certificate_compare(const void* a, const void* b, void* udata)
 {
@@ -101,4 +107,99 @@ void nearby_storage_certificate_manager_iterate_public_certificates(struct nearb
     udata.user_data = user_data;
 
     hashmap_scan(instance->public_certificates, nearby_storage_certificate_manager_iterate_public_certificates_iter_method, &udata);
+}
+
+// nearby_storage_certificate_manager_try_decrypt_encrypted_metadata
+
+struct nearby_storage_certificate_manager_try_decrypt_encrypted_metadata_user_data
+{
+    unsigned char* encrypted_metadata_data;
+    unsigned long long encrypted_metadata_length;
+    unsigned char* salt_data;
+    unsigned long long salt_length;
+};
+
+bool nearby_storage_certificate_manager_try_decrypt_encrypted_metadata_iter(struct nearby_storage_public_certificate* public_certificate, void* user_data)
+{
+    struct nearby_storage_certificate_manager_try_decrypt_encrypted_metadata_user_data* udata = user_data;
+
+    unsigned char derived_nearby_share_key_data[NEARBY_SHARE_KEY_DERIVED_SIZE] = {};
+    size_t derived_nearby_share_key_length = NEARBY_SHARE_KEY_DERIVED_SIZE;
+
+    unsigned char d1, d2;
+
+    int res = nearby_storage_hkdf_sha256(udata->salt_data, 2, NULL, 0, NULL, 0, derived_nearby_share_key_data, &derived_nearby_share_key_length);
+
+    if (res == 0)
+    {
+        // Fail here, lets just skip, shouldn't fail, but whatever.
+        return true;
+    }
+
+    // This is kinda ghetto because I dont know the real size, so I just assume double, max 512 aka single 256
+    if (public_certificate->encrypted_metadata_bytes_length > 256)
+    {
+        return true;
+    }
+
+    if (public_certificate->secret_key_length != 32)
+    {
+        printf("[!] Encountered weird secret_key.\n");
+        return true;
+    }
+
+    size_t decrypted_metadata_length = public_certificate->encrypted_metadata_bytes_length * 2;
+    unsigned char* decrypted_metadata_data = malloc(decrypted_metadata_length);
+
+    memset(decrypted_metadata_data, 0, decrypted_metadata_length);
+
+    decrypted_metadata_length = nearby_storage_aes_ctr_decrypt(udata->encrypted_metadata_data, udata->encrypted_metadata_length,
+                                                               public_certificate->secret_key_data, derived_nearby_share_key_data, decrypted_metadata_data);
+
+    {
+        unsigned char* hmac_key_data = malloc(NEARBY_SHARE_KEY_METADATA_ENCRYPTION_KEY_TAG_SIZE);
+        unsigned char* hmac_md_data = malloc(EVP_MAX_MD_SIZE);
+        unsigned int hmac_md_length = EVP_MAX_MD_SIZE;
+
+        memset(hmac_key_data, 0, NEARBY_SHARE_KEY_METADATA_ENCRYPTION_KEY_TAG_SIZE);
+        memset(hmac_md_data, 0, EVP_MAX_MD_SIZE);
+
+        if (HMAC(EVP_sha256(), hmac_key_data, NEARBY_SHARE_KEY_METADATA_ENCRYPTION_KEY_TAG_SIZE, decrypted_metadata_data, decrypted_metadata_length, hmac_md_data, NULL) == NULL)
+        {
+            printf("[!] HMAC fialed\n");
+        }
+
+        if (memcmp(hmac_md_data, public_certificate->metadata_encryption_key_tag_data, public_certificate->metadata_encryption_key_tag_length) == 0)
+        {
+            printf("Found cert\n");
+        }
+
+        // HMAC Cleanup
+
+        STOP:
+
+        free(hmac_md_data);
+        free(hmac_key_data);
+    }
+
+    // End cleanup
+
+    free(decrypted_metadata_data);
+
+    return true;
+}
+
+bool nearby_storage_certificate_manager_try_decrypt_encrypted_metadata(struct nearby_storage_certificate_manager* instance, unsigned char* encrypted_metadata_data,
+                                                                       unsigned long long encrypted_metadata_length, unsigned char* salt_data, unsigned long long salt_length)
+{
+    struct nearby_storage_certificate_manager_try_decrypt_encrypted_metadata_user_data udata = {
+        .encrypted_metadata_data = encrypted_metadata_data,     //
+        .encrypted_metadata_length = encrypted_metadata_length, //
+        .salt_data = salt_data,                                 //
+        .salt_length = salt_length                              //
+    };
+
+    nearby_storage_certificate_manager_iterate_public_certificates(instance, nearby_storage_certificate_manager_try_decrypt_encrypted_metadata_iter, &udata);
+
+    return false;
 }

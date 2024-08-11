@@ -23,6 +23,8 @@ extern "C"
                                                                                                         unsigned long long secret_id_length);
     void nearby_storage_certificate_manager_iterate_public_certificates(struct nearby_storage_certificate_manager* instance,
                                                                         nearby_storage_certificate_manager_iterate_public_certificate_t iterator_method, void* user_data);
+    bool nearby_storage_certificate_manager_try_decrypt_encrypted_metadata(struct nearby_storage_certificate_manager* instance, unsigned char* encrypted_metadata_data,
+                                                                           unsigned long long encrypted_metadata_length, unsigned char* salt_data, unsigned long long salt_length);
 
 #ifdef __cplusplus
 }
