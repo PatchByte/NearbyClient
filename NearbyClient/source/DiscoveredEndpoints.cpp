@@ -62,7 +62,7 @@ namespace nearby::client
             RENDER_TABLE_ENTRY("Is Fast Advertisement", "%s", medium->is_fast_advertisement == true ? "yes" : "no");
             RENDER_TABLE_ENTRY("Is Device Token Present", "%s", medium->is_device_token_present == true ? "yes" : "no");
             RENDER_TABLE_ENTRY("Is Extra Field", "%s", medium->is_device_token_present == true ? "yes" : "no");
-            RENDER_TABLE_ENTRY("Last Life Sign", "%s", fmt::format("{}", this->m_LastLifeSign).data());
+            //RENDER_TABLE_ENTRY("Last Life Sign", "%s", fmt::format("{}", this->m_LastLifeSign).data());
 
             ImGui::EndTable();
         }
@@ -74,6 +74,7 @@ namespace nearby::client
                 auto share = m_Advertisement->GetShare();
 
                 RENDER_TABLE_ENTRY("Device Type", "%s", nearby_share_target_type_to_string(share->device_type));
+                RENDER_TABLE_ENTRY("Is Visible", "%s", share->is_visible == true ? "yes" : "no");
 
                 ImGui::EndTable();
             }

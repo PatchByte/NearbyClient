@@ -159,7 +159,7 @@ void nearby_layer_bluetooth_thread(nearby_layer_bluetooth_t* instance)
 
     {
         uint8_t current_hci_event_buffer[HCI_MAX_EVENT_SIZE];
-        evt_le_meta_event* current_hci_meta_event;
+        evt_le_meta_event* current_hci_meta_event = NULL;
 
         while (instance->is_scanning == true)
         {
@@ -198,7 +198,7 @@ void nearby_layer_bluetooth_thread(nearby_layer_bluetooth_t* instance)
                                 if (current_service_data_length <= current_advertising_info->length)
                                 {
 
-                                    if (current_service_data_length == 0)
+                                    if (current_service_data_length == 0 || current_service_data_length < 30)
                                     {
                                         break;
                                     }

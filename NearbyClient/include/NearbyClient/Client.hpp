@@ -11,6 +11,7 @@
 #include "NearbyStorage/CertificateManager.h"
 #include <AshLogger/AshLogger.h>
 #include <map>
+#include <mutex>
 
 namespace nearby::client
 {
@@ -52,6 +53,7 @@ namespace nearby::client
         nearby_layer_bluetooth_t* m_LayerBluetooth;
 
         // Layer Endpoints
+        std::mutex m_DiscoveredEndpointsMutex;
         std::map<NearbyDiscoveredEndpointId, NearbyDiscoveredEndpointBase*> m_DiscoveredEndpoints;
     };
 

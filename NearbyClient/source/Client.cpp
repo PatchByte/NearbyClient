@@ -36,7 +36,7 @@ namespace nearby::client
 
     NearbyClient::NearbyClient()
         : m_Logger("NearbyClient", {}), m_Renderer(nullptr), m_BucketPath(), m_Bucket(), m_OAuthorizer([this](services::OAuthToken Token) { OnReceivedOAuthToken(Token); }), m_NearbyShare(m_Logger),
-          m_CertificateManager(nearby_storage_certificate_manager_create()), m_LayerBluetooth(nullptr), m_DiscoveredEndpoints()
+          m_CertificateManager(nearby_storage_certificate_manager_create()), m_LayerBluetooth(nullptr), m_DiscoveredEndpoints(), m_DiscoveredEndpointsMutex()
     {
         m_Logger.AddLoggerPassage(
             new ash::AshLoggerFunctionPassage([](ash::AshLoggerDefaultPassage* This, ash::AshLoggerTag Tag, std::string Format, fmt::format_args Args, std::string FormattedString)
@@ -124,7 +124,9 @@ namespace nearby::client
 
             m_Renderer->BeginFrame();
 
+            m_DiscoveredEndpointsMutex.lock();
             this->RenderGui();
+            m_DiscoveredEndpointsMutex.unlock();
 
             m_Renderer->EndFrame();
         }
@@ -239,7 +241,8 @@ namespace nearby::client
                                         m_Logger.Log("Error", "Failed to deserialize protobuf device.");
                                     }
 
-                                    m_Logger.Log("Info", "Display Name: {}; Name: {}", pb_get_string_for_decode_callback(&parsedDevice.display_name), pb_get_string_for_decode_callback(&parsedDevice.name));
+                                    m_Logger.Log("Info", "Display Name: {}; Name: {}", pb_get_string_for_decode_callback(&parsedDevice.display_name),
+                                                 pb_get_string_for_decode_callback(&parsedDevice.name));
 
                                     pb_destroy_string_decode_callback(&parsedDevice.display_name);
                                     pb_destroy_string_decode_callback(&parsedDevice.name);
@@ -335,6 +338,7 @@ namespace nearby::client
             {
                 endpoint = new NearbyDiscoveredEndpointBle(MacAddress, advertisementBle);
                 endpoint->SetReceivedLastLifeSign();
+
                 m_DiscoveredEndpoints.emplace(advertisementBle->GetEndpointId(), endpoint);
             }
         }
