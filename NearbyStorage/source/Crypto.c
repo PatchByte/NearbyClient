@@ -121,32 +121,9 @@ int nearby_storage_aes_ctr_256_decrypt(unsigned char* encrypted_data, unsigned l
 }
 
 // Stolen from https://wiki.openssl.org/index.php/EVP_Authenticated_Encryption_and_Decryption
-int nearby_storage_aes_gcm_256_decrypt(unsigned char* encrypted_data, int encrypted_length, unsigned char* aad, int aad_length, unsigned char* tag, unsigned char* key, unsigned char* iv,
-                                       unsigned char* decrypted_data)
+int nearby_storage_google_aead_aes_gcm_256_decrypt(unsigned char* encrypted_data, int encrypted_length, unsigned char* aad, int aad_length, unsigned char* tag, unsigned char* key, unsigned char* iv,
+                                                   unsigned char* decrypted_data)
 {
-    /*
-    printf("encrypted_data:\n");
-    for (int i = 0; i < encrypted_length; i++)
-    {
-        printf("%02x ", encrypted_data[i]);
-    }
-    printf("\n");
-
-    printf("key:\n");
-    for (int i = 0; i < 32; i++)
-    {
-        printf("%02x ", key[i]);
-    }
-    printf("\n");
-
-    printf("iv:\n");
-    for (int i = 0; i < 12; i++)
-    {
-        printf("%02x ", iv[i]);
-    }
-    printf("\n");
-    */
-
     EVP_CIPHER_CTX* ctx;
     int len;
     int plaintext_len;
@@ -178,9 +155,7 @@ int nearby_storage_aes_gcm_256_decrypt(unsigned char* encrypted_data, int encryp
         handleErrors();
     plaintext_len = len;
 
-    unsigned char dummy_tag[16] = {};
-
-    if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, 16, dummy_tag))
+    if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, 16, tag))
     {
         ERR_print_errors_fp(stderr);
     }
@@ -197,8 +172,6 @@ int nearby_storage_aes_gcm_256_decrypt(unsigned char* encrypted_data, int encryp
         ERR_print_errors_fp(stderr);
     }
 
-    printf("ret: %i\n", ret);
-
     /* Clean up */
     EVP_CIPHER_CTX_free(ctx);
 
@@ -210,8 +183,6 @@ int nearby_storage_aes_gcm_256_decrypt(unsigned char* encrypted_data, int encryp
     }
     else
     {
-
-        /* Verify failed */
-        return plaintext_len;
+        return -1;
     }
 }

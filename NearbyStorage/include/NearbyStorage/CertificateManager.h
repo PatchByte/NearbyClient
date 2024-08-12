@@ -3,6 +3,8 @@
 
 #include "NearbyStorage/Certificate.h"
 #include "NearbyStorage/HashMap.h"
+#include "NearbyStorage/Metadata.h"
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -23,8 +25,17 @@ extern "C"
                                                                                                         unsigned long long secret_id_length);
     void nearby_storage_certificate_manager_iterate_public_certificates(struct nearby_storage_certificate_manager* instance,
                                                                         nearby_storage_certificate_manager_iterate_public_certificate_t iterator_method, void* user_data);
-    bool nearby_storage_certificate_manager_try_decrypt_encrypted_metadata(struct nearby_storage_certificate_manager* instance, unsigned char* encrypted_metadata_data,
-                                                                           unsigned long long encrypted_metadata_length, unsigned char* salt_data, unsigned long long salt_length);
+    /*!
+     * @brief Tries to find corresponding public certificate and decrypt the metadata.
+     *
+     * @param[out] decrypted_metadata_data Location of the allocated pointer.
+     * @param[out] decrypted_metadata_length Location of the allocated pointer length.
+     *
+     * @warning You need to deallocated the decrypted_metadata output
+     */
+    bool nearby_storage_certificate_manager_try_decrypt_encrypted_metadata(struct nearby_storage_certificate_manager* instance, unsigned char* encrypted_metadata_tag_data,
+                                                                           unsigned long long encrypted_metadata_tag_length, unsigned char* salt_data, unsigned long long salt_length,
+                                                                           struct nearby_storage_decrypted_metadata_buffer** output_metadata);
 
 #ifdef __cplusplus
 }

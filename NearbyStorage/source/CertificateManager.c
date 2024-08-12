@@ -2,6 +2,7 @@
 #include "NearbyStorage/Certificate.h"
 #include "NearbyStorage/Crypto.h"
 #include "NearbyStorage/HashMap.h"
+#include "NearbyStorage/Metadata.h"
 #include <malloc.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
@@ -122,6 +123,7 @@ struct nearby_storage_certificate_manager_try_decrypt_encrypted_metadata_user_da
     struct nearby_storage_public_certificate* public_certificate;
     unsigned char* decrypted_metadata_key_data;
     unsigned long long decrypted_metadata_key_length;
+    struct nearby_storage_decrypted_metadata_buffer* decrypted_metadata_buffer;
 };
 
 bool nearby_storage_certificate_manager_try_decrypt_encrypted_metadata_iter(struct nearby_storage_public_certificate* public_certificate, void* user_data)
@@ -200,20 +202,30 @@ bool nearby_storage_certificate_manager_try_decrypt_encrypted_metadata_iter(stru
     return foundPublicCertificate == false;
 }
 
-bool nearby_storage_certificate_manager_try_decrypt_encrypted_metadata(struct nearby_storage_certificate_manager* instance, unsigned char* encrypted_metadata_data,
-                                                                       unsigned long long encrypted_metadata_length, unsigned char* salt_data, unsigned long long salt_length)
+bool nearby_storage_certificate_manager_try_decrypt_encrypted_metadata(struct nearby_storage_certificate_manager* instance, unsigned char* encrypted_metadata_tag_data,
+                                                                       unsigned long long encrypted_metadata_tag_length, unsigned char* salt_data, unsigned long long salt_length,
+                                                                       struct nearby_storage_decrypted_metadata_buffer** output_metadata)
 {
-    struct nearby_storage_certificate_manager_try_decrypt_encrypted_metadata_user_data udata = {.encrypted_metadata_data = encrypted_metadata_data,     //
-                                                                                                .encrypted_metadata_length = encrypted_metadata_length, //
-                                                                                                .salt_data = salt_data,                                 //
-                                                                                                .salt_length = salt_length,                             //
+    struct nearby_storage_certificate_manager_try_decrypt_encrypted_metadata_user_data udata = {.encrypted_metadata_data = encrypted_metadata_tag_data,     //
+                                                                                                .encrypted_metadata_length = encrypted_metadata_tag_length, //
+                                                                                                .salt_data = salt_data,                                     //
+                                                                                                .salt_length = salt_length,                                 //
                                                                                                 .public_certificate = NULL,
                                                                                                 .decrypted_metadata_key_data = NULL,
-                                                                                                .decrypted_metadata_key_length = 0};
+                                                                                                .decrypted_metadata_key_length = 0,
+                                                                                                .decrypted_metadata_buffer = NULL};
 
     nearby_storage_certificate_manager_iterate_public_certificates(instance, nearby_storage_certificate_manager_try_decrypt_encrypted_metadata_iter, &udata);
 
     if (udata.public_certificate == NULL)
+    {
+        return false;
+    }
+
+    // 16 bytes aead gcm tag
+    // 1 byte min protobuf message.
+
+    if (udata.public_certificate->encrypted_metadata_bytes_length <= 17)
     {
         return false;
     }
@@ -233,16 +245,15 @@ bool nearby_storage_certificate_manager_try_decrypt_encrypted_metadata(struct ne
 
     memset(decrypted_metadata_data, 0, decrypted_metadata_length);
 
-    int r = nearby_storage_aes_gcm_256_decrypt(udata.public_certificate->encrypted_metadata_bytes_data, udata.public_certificate->encrypted_metadata_bytes_length, NULL, 0, NULL,
-                                               derived_metadata_encryption_key_data, derived_metadata_encryption_iv_data, decrypted_metadata_data);
+    int decrypted_metadata_length_actual =
+        nearby_storage_google_aead_aes_gcm_256_decrypt(udata.public_certificate->encrypted_metadata_bytes_data, udata.public_certificate->encrypted_metadata_bytes_length - 16, NULL, 0,
+                                                       udata.public_certificate->encrypted_metadata_bytes_data + udata.public_certificate->encrypted_metadata_bytes_length - 16,
+                                                       derived_metadata_encryption_key_data, derived_metadata_encryption_iv_data, decrypted_metadata_data);
 
-    // printf("r: %i\n", r);
-
-    for(int i = 0; i < r; i++)
-        {
-            printf("%02x ", decrypted_metadata_data[i]);
-        }
-    printf("\n");
+    if (output_metadata)
+    {
+        (*output_metadata) = nearby_storage_decrypted_metadata_buffer_create(decrypted_metadata_data, decrypted_metadata_length_actual);
+    }
 
     // Cleanup
 
