@@ -2,7 +2,6 @@
 #include "nlohmann/json_fwd.hpp"
 #include <filesystem>
 #include <fstream>
-#include <httplib.h>
 
 namespace nearby::client
 {

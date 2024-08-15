@@ -32,7 +32,6 @@ namespace nearby::client::services
     private:
         ash::AshLogger& m_Logger;
         OAuthToken m_Token;
-        // httplib::SSLClient m_Client;
         CURL* m_CurlHandle;
     };
 

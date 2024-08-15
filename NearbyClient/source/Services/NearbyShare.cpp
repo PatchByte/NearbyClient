@@ -3,6 +3,8 @@
 #include "NearbyProto/rpc_resources.pb.h"
 #include "NearbyStorage/Certificate.h"
 #include "fmt/format.h"
+#include "ixwebsocket/IXHttp.h"
+#include "ixwebsocket/IXHttpClient.h"
 #include "nanopb-extension/pb_bytes_extension.h"
 #include "nanopb-extension/pb_repeated_extension.h"
 #include "nanopb-extension/pb_string_extension.h"
@@ -10,13 +12,23 @@
 #include <curl/curl.h>
 #include <curl/easy.h>
 #include <curl/header.h>
-#include <httplib.h>
 #include <pb.h>
 #include <pb_decode.h>
+#include <random>
 #include <vector>
 
 namespace nearby::client::services
 {
+
+    static ix::SocketTLSOptions sfCreateTlsOptions()
+    {
+        ix::SocketTLSOptions socketTlsOptions = ix::SocketTLSOptions();
+
+        socketTlsOptions.tls = true;
+        socketTlsOptions.caFile = "/etc/pki/tls/certs/ca-bundle.crt";
+
+        return socketTlsOptions;
+    }
 
     // Too lazy to code
     // Copied from: https://inversepalindrome.com/blog/how-to-create-a-random-string-in-cpp
@@ -39,9 +51,7 @@ namespace nearby::client::services
     }
 
     NearbyShare::NearbyShare(ash::AshLogger& Logger) : m_Logger(Logger), m_Token()
-    // m_Client("nearbysharing-pa.googleapis.com")
     {
-        m_CurlHandle = curl_easy_init();
     }
 
     NearbyShare::ListPublicCertificatesResponse NearbyShare::ListPublicCertificates()
@@ -54,11 +64,19 @@ namespace nearby::client::services
 
         std::string url = fmt::format("https://nearbysharing-pa.googleapis.com/v1/users/me/devices/{}/publicCertificates", sfRandomString(10));
 
-        curl_slist* headers = nullptr;
+        ix::HttpClient client = ix::HttpClient();
 
-        curl_easy_setopt(m_CurlHandle, CURLOPT_URL, url.c_str());
+        client.setTLSOptions(sfCreateTlsOptions());
 
-            if (res->status != 200)
+        ix::HttpRequestArgsPtr clientArgs = client.createRequest();
+
+        clientArgs->extraHeaders["authorization"] = fmt::format("Bearer {}", m_Token.GetAccessToken());
+        clientArgs->extraHeaders["content-type"] = "application/x-protobuf";
+        clientArgs->extraHeaders["user-agent"] = "Mozilla/5.0";
+
+        auto res = client.get(url, clientArgs);
+
+        if (res->statusCode != 200)
         {
             m_Logger.Log("Error", "Failed to fetch public certificates. {}", res->body);
             return {.m_Error = false};

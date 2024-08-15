@@ -28,6 +28,8 @@ extern "C"
     int nearby_storage_google_aead_aes_gcm_256_decrypt(unsigned char* encrypted_data, int encrypted_length, unsigned char* aad, int aad_length, unsigned char* tag, unsigned char* key,
                                                        unsigned char* iv, unsigned char* decrypted_data);
 
+    int nearby_storage_hmac_sha_256(unsigned char* key_data, int key_length, unsigned char* input_data, size_t input_length, unsigned char* output_data);
+
 #ifdef __cplusplus
 }
 #endif

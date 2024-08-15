@@ -1,15 +1,17 @@
 #include "NearbyClient/Main.hpp"
 #include "NearbyClient/Client.hpp"
-#include "curl/curl.h"
+#include "ixwebsocket/IXNetSystem.h"
+#include "ixwebsocket/IXSocketMbedTLS.h"
+#include "ixwebsocket/IXSocketTLSOptions.h"
 
 int main(int ArgCount, char** ArgVector)
 {
-    curl_global_init(CURL_GLOBAL_ALL);
+    ix::initNetSystem();
 
     nearby::client::NearbyClient client = nearby::client::NearbyClient();
     client.Run();
 
-    curl_global_cleanup();
+    ix::uninitNetSystem();
 
     return 0;
 }
