@@ -1,4 +1,5 @@
 #include "NearbyClient/Services/NearbyShare.hpp"
+#include "NearbyClient/Services/Tls.hpp"
 #include "NearbyProto/certificate_rpc.pb.h"
 #include "NearbyProto/rpc_resources.pb.h"
 #include "NearbyStorage/Certificate.h"
@@ -19,17 +20,6 @@
 
 namespace nearby::client::services
 {
-
-    static ix::SocketTLSOptions sfCreateTlsOptions()
-    {
-        ix::SocketTLSOptions socketTlsOptions = ix::SocketTLSOptions();
-
-        socketTlsOptions.tls = true;
-        socketTlsOptions.caFile = "/etc/pki/tls/certs/ca-bundle.crt";
-
-        return socketTlsOptions;
-    }
-
     // Too lazy to code
     // Copied from: https://inversepalindrome.com/blog/how-to-create-a-random-string-in-cpp
     static std::string sfRandomString(std::size_t length)
@@ -66,7 +56,7 @@ namespace nearby::client::services
 
         ix::HttpClient client = ix::HttpClient();
 
-        client.setTLSOptions(sfCreateTlsOptions());
+        client.setTLSOptions(TLS::sfCreateTlsOptions());
 
         ix::HttpRequestArgsPtr clientArgs = client.createRequest();
 

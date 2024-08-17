@@ -1,4 +1,5 @@
 #include "NearbyClient/Services/OAuth/Token.hpp"
+#include "NearbyClient/Services/Tls.hpp"
 #include "ixwebsocket/IXHttp.h"
 #include "ixwebsocket/IXHttpClient.h"
 #include "ixwebsocket/IXSocketTLSOptions.h"
@@ -10,16 +11,6 @@
 
 namespace nearby::client::services
 {
-    static ix::SocketTLSOptions sfCreateTlsOptions()
-    {
-        ix::SocketTLSOptions socketTlsOptions = ix::SocketTLSOptions();
-
-        socketTlsOptions.tls = true;
-        socketTlsOptions.caFile = "/etc/pki/tls/certs/ca-bundle.crt";
-
-        return socketTlsOptions;
-    }
-
     bool OAuthToken::IsExpired()
     {
         return time(nullptr) > m_ExpireTimeStamp;
@@ -117,7 +108,7 @@ namespace nearby::client::services
 
         ix::HttpClient client = ix::HttpClient();
 
-        client.setTLSOptions(sfCreateTlsOptions());
+        client.setTLSOptions(TLS::sfCreateTlsOptions());
 
         ix::HttpRequestArgsPtr clientArgs = client.createRequest();
 
@@ -152,7 +143,7 @@ namespace nearby::client::services
 
         ix::HttpClient client = ix::HttpClient();
 
-        client.setTLSOptions(sfCreateTlsOptions());
+        client.setTLSOptions(TLS::sfCreateTlsOptions());
 
         ix::HttpRequestArgsPtr clientArgs = client.createRequest();
 
