@@ -151,11 +151,15 @@ namespace nearby::client::services
         std::string dataSerialized = data.dump();
 
         ix::HttpClient client = ix::HttpClient();
+
+        client.setTLSOptions(sfCreateTlsOptions());
+
         ix::HttpRequestArgsPtr clientArgs = client.createRequest();
 
+        clientArgs->body = data.dump();
         clientArgs->extraHeaders["Content-Type"] = "application/json";
 
-        auto res = client.post(url, data.dump(), clientArgs);
+        auto res = client.post(url, clientArgs->body, clientArgs);
 
         if (res->statusCode != 200)
         {
