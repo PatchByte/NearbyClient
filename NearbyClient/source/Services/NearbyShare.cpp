@@ -10,9 +10,6 @@
 #include "nanopb-extension/pb_repeated_extension.h"
 #include "nanopb-extension/pb_string_extension.h"
 #include "pb_encode.h"
-#include <curl/curl.h>
-#include <curl/easy.h>
-#include <curl/header.h>
 #include <pb.h>
 #include <pb_decode.h>
 #include <random>

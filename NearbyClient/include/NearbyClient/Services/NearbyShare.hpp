@@ -4,7 +4,6 @@
 #include "AshLogger/AshLogger.h"
 #include "NearbyClient/Services/OAuth/Token.hpp"
 #include "NearbyStorage/Certificate.h"
-#include "curl/curl.h"
 #include <vector>
 
 namespace nearby::client::services
