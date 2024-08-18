@@ -4,6 +4,7 @@
 #include "NearbyStorage/HashMap.h"
 #include "NearbyStorage/Metadata.h"
 #include <malloc.h>
+#include <mbedtls/md.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
 #include <stdint.h>
@@ -166,15 +167,11 @@ bool nearby_storage_certificate_manager_try_decrypt_encrypted_metadata_iter(stru
     {
         unsigned char* hmac_key_data = malloc(NEARBY_SHARE_KEY_METADATA_ENCRYPTION_KEY_TAG_SIZE);
         unsigned char* hmac_md_data = malloc(EVP_MAX_MD_SIZE);
-        unsigned int hmac_md_length = EVP_MAX_MD_SIZE;
 
         memset(hmac_key_data, 0, NEARBY_SHARE_KEY_METADATA_ENCRYPTION_KEY_TAG_SIZE);
         memset(hmac_md_data, 0, EVP_MAX_MD_SIZE);
 
-        if (HMAC(EVP_sha256(), hmac_key_data, NEARBY_SHARE_KEY_METADATA_ENCRYPTION_KEY_TAG_SIZE, decrypted_metadata_key_data, decrypted_metadata_key_length, hmac_md_data, NULL) == NULL)
-        {
-            printf("[!] HMAC fialed\n");
-        }
+        nearby_storage_hmac_sha_256(hmac_key_data, NEARBY_SHARE_KEY_METADATA_ENCRYPTION_KEY_TAG_SIZE, decrypted_metadata_key_data, decrypted_metadata_key_length, hmac_md_data);
 
         foundPublicCertificate = (memcmp(hmac_md_data, public_certificate->metadata_encryption_key_tag_data, public_certificate->metadata_encryption_key_tag_length) == 0);
 

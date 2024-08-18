@@ -1,8 +1,12 @@
 #include "NearbyClient/Services/OAuth/Token.hpp"
+#include "NearbyClient/Services/Tls.hpp"
+#include "ixwebsocket/IXHttp.h"
+#include "ixwebsocket/IXHttpClient.h"
+#include "ixwebsocket/IXSocketTLSOptions.h"
 #include "nlohmann/json_fwd.hpp"
 #include <ctime>
-#include <httplib.h>
-#include <openssl/err.h>
+#include <iostream>
+#include <memory>
 #include <vector>
 
 namespace nearby::client::services
@@ -92,6 +96,8 @@ namespace nearby::client::services
 
     bool OAuthToken::RequestTokenFromCode(std::string ClientId, std::string ClientSecret, std::string RedirectUri, std::string Code)
     {
+        std::string url = "https://oauth2.googleapis.com/token";
+
         nlohmann::json data = {};
 
         data["client_id"] = ClientId;
@@ -100,13 +106,21 @@ namespace nearby::client::services
         data["grant_type"] = "authorization_code";
         data["code"] = Code;
 
-        std::string dataSerialized = data.dump();
+        ix::HttpClient client = ix::HttpClient();
 
-        httplib::SSLClient client = httplib::SSLClient("oauth2.googleapis.com");
+        client.setTLSOptions(TLS::sfCreateTlsOptions());
 
-        auto res = client.Post("/token", dataSerialized, "application/json");
+        ix::HttpRequestArgsPtr clientArgs = client.createRequest();
 
-        if (res->status != 200)
+        clientArgs->extraHeaders["Content-Type"] = "application/json";
+        clientArgs->body = data.dump();
+
+        auto res = client.post(url, clientArgs->body, clientArgs);
+
+        std::cout << res->body << std::endl;
+        std::cout << res->errorMsg << std::endl;
+
+        if (res->statusCode != 200)
         {
             return false;
         }
@@ -116,6 +130,8 @@ namespace nearby::client::services
 
     bool OAuthToken::RefreshToken(std::string ClientId, std::string ClientSecret)
     {
+        std::string url = "https://oauth2.googleapis.com/token";
+
         nlohmann::json data = {};
 
         data["client_id"] = ClientId;
@@ -125,11 +141,18 @@ namespace nearby::client::services
 
         std::string dataSerialized = data.dump();
 
-        httplib::SSLClient client = httplib::SSLClient("oauth2.googleapis.com");
+        ix::HttpClient client = ix::HttpClient();
 
-        auto res = client.Post("/token", dataSerialized, "application/json");
+        client.setTLSOptions(TLS::sfCreateTlsOptions());
 
-        if (res->status != 200)
+        ix::HttpRequestArgsPtr clientArgs = client.createRequest();
+
+        clientArgs->body = data.dump();
+        clientArgs->extraHeaders["Content-Type"] = "application/json";
+
+        auto res = client.post(url, clientArgs->body, clientArgs);
+
+        if (res->statusCode != 200)
         {
             return false;
         }

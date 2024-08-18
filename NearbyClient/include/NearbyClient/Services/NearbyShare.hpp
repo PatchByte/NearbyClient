@@ -4,7 +4,7 @@
 #include "AshLogger/AshLogger.h"
 #include "NearbyClient/Services/OAuth/Token.hpp"
 #include "NearbyStorage/Certificate.h"
-#include "httplib.h"
+#include "curl/curl.h"
 #include <vector>
 
 namespace nearby::client::services
@@ -32,7 +32,7 @@ namespace nearby::client::services
     private:
         ash::AshLogger& m_Logger;
         OAuthToken m_Token;
-        httplib::SSLClient m_Client;
+        CURL* m_CurlHandle;
     };
 
 } // namespace nearby::client::services

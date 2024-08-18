@@ -2,10 +2,10 @@
 #define _NEARBYCLIENT_SERVICES_OAUTH_AUTHORIZER_HPP
 
 #include "NearbyClient/Services/OAuth/Token.hpp"
+#include "ixwebsocket/IXHttpServer.h"
 #include <functional>
 #include <string>
 #include <thread>
-#include <httplib.h>
 
 namespace nearby::client::services
 {
@@ -24,9 +24,10 @@ namespace nearby::client::services
         void Thread();
     private:
         std::jthread* m_Thread;
+        bool m_Running;
         unsigned short m_Port;
         std::string m_State;
-        httplib::Server* m_Server;
+        ix::HttpServer* m_Server;
         std::string m_Code;
         dReceivedOAuthToken m_ReceivedOAuthToken;
     };

@@ -1,10 +1,14 @@
 #include "NearbyClient/Services/OAuth/Authorizer.hpp"
 #include "NearbyClient/Services/OAuth/Token.hpp"
 #include "NearbyClient/Services/Variables.hpp"
+#include "NearbyClient/Utilities/Uri.hpp"
 #include "fmt/format.h"
+#include "ixwebsocket/IXConnectionState.h"
+#include "ixwebsocket/IXHttp.h"
+#include "ixwebsocket/IXHttpServer.h"
 #include <cstdlib>
 #include <future>
-#include <httplib.h>
+#include <iostream>
 #include <random>
 #include <thread>
 
@@ -30,7 +34,7 @@ namespace nearby::client::services
         return randomStrng;
     }
 
-    OAuthorizer::OAuthorizer(dReceivedOAuthToken ReceivedOAuthToken) : m_Port(-1), m_Thread(nullptr), m_State(), m_ReceivedOAuthToken(ReceivedOAuthToken), m_Code()
+    OAuthorizer::OAuthorizer(dReceivedOAuthToken ReceivedOAuthToken) : m_Port(-1), m_Thread(nullptr), m_State(), m_ReceivedOAuthToken(ReceivedOAuthToken), m_Code(), m_Server(), m_Running(false)
     {
     }
 
@@ -51,15 +55,8 @@ namespace nearby::client::services
     {
         if (m_Server)
         {
-            if (m_Server->is_running())
-            {
-                m_Server->stop();
-            }
-            else
-            {
-                delete m_Server;
-                m_Server = nullptr;
-            }
+            delete m_Server;
+            m_Server = nullptr;
         }
 
         if (m_Thread)
@@ -85,32 +82,66 @@ namespace nearby::client::services
 
     void OAuthorizer::Thread()
     {
-        m_Server = new httplib::Server();
+        m_Server = new ix::HttpServer(m_Port, "127.0.0.1");
 
-        m_Server->Get("/callback",
-                      [this](const httplib::Request& Request, httplib::Response& Response) -> void
-                      {
-                          std::string code = Request.get_param_value("code");
+        // "/callback"
 
-                          if (code.length() > 0)
-                          {
-                              m_Code = code;
+        m_Server->setOnConnectionCallback(
+            [this](ix::HttpRequestPtr Request, std::shared_ptr<ix::ConnectionState> ConnectionState) -> ix::HttpResponsePtr
+            {
+                /*
+                std::string code = Request.get_param_value("code");
 
-                              Response.set_content("<!DOCTYPE html><html><body><h1>Close this now, you can go back into the application.</h1></body></html>", "text/html");
+                if (code.length() > 0)
+                {
+                    m_Code = code;
 
-                              std::ignore = std::async(std::launch::async, [](httplib::Server* Server) { Server->stop(); }, m_Server);
+                    Response.set_content("<!DOCTYPE html><html><body><h1>Close this now, you can go back into the application.</h1></body></html>", "text/html");
 
-                              return;
-                          }
+                    std::ignore = std::async(std::launch::async, [](httplib::Server* Server) { Server->stop(); }, m_Server);
 
-                          Response.set_content("<html><body><h1>Error has occurred.</h1></body></html>", "text/html");
-                      });
+                    return;
+                }
 
-        m_Server->listen("127.0.0.1", m_Port);
+                Response.set_content("<html><body><h1>Error has occurred.</h1></body></html>", "text/html");
+                 */
+
+                ix::HttpResponsePtr response = std::make_shared<ix::HttpResponse>();
+
+                response->headers["content-type"] = "text/html";
+
+                uri parsedUri = uri(std::string("https://127.0.0.1:80") + Request->uri);
+
+                if (parsedUri.get_query_dictionary().contains("code"))
+                {
+                    response->body = "<!DOCTYPE html><html><body><h1>Close this now, you can go back into the application.</h1></body></html>";
+
+                    m_Code = parsedUri.get_query_dictionary().at("code");
+
+                    std::ignore = std::async(std::launch::async, [this]() { m_Running = false; });
+                }
+                else
+                {
+                    response->body = "<html><body><h1>Error has occurred.</h1></body></html>";
+                }
+
+                return response;
+            });
+
+        m_Running = m_Server->listenAndStart();
+
+        while(m_Running)
+        {
+            std::this_thread::yield();
+        }
+
+        m_Server->stop();
+
+        std::cout << "a" << std::endl;
 
         OAuthToken token = OAuthToken();
 
-        if(token.RequestTokenFromCode(Variables::GetClientId(), Variables::GetClientSecret(), fmt::format("http://127.0.0.1:{}/callback", m_Port), m_Code) == true)
+        if (token.RequestTokenFromCode(Variables::GetClientId(), Variables::GetClientSecret(), fmt::format("http://127.0.0.1:{}/callback", m_Port), m_Code) == true)
         {
             m_ReceivedOAuthToken(token);
         }

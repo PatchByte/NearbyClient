@@ -1,8 +1,9 @@
 cmake_minimum_required(VERSION 3.20)
 project("NearbyClient-Root")
 
-# set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/Vendors/nanopb/extra)
-# find_package(Nanopb REQUIRED)
+set(MbedTLS_DIR $ENV{MBEDTLS_INSTALL_DIR}/cmake)
+
+find_package(MbedTLS REQUIRED)
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
