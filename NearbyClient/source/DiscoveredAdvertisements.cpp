@@ -24,16 +24,12 @@ namespace nearby::client
         this->Cleanup();
     }
 
-    bool NearbyDiscoveredAdvertisementBle::Deserialize(void* AdvertisementData, size_t AdvertisementLength)
+    bool NearbyDiscoveredAdvertisementBle::Deserialize(ash::AshBuffer* Buffer)
     {
-        {
-            ash::AshCRC32 crc = ash::AshCRC32();
-            crc.Update(AdvertisementData, AdvertisementLength);
-            m_Hash = crc.GetValue();
-        }
+        m_Hash = ash::AshCRC32Utils::Calculate(0, Buffer);
 
         nearby_utils_buffer mediumBuffer = nearby_utils_buffer();
-        nearby_utils_buffer_initialize(&mediumBuffer, AdvertisementData, AdvertisementLength);
+        nearby_utils_buffer_initialize(&mediumBuffer, Buffer->GetPointer(), Buffer->GetSize());
 
         if (nearby_medium_advertisement_ble_deserialize(m_Medium, &mediumBuffer) == false)
         {

@@ -1,4 +1,5 @@
 #include "NearbyClient/Client.hpp"
+#include "Ash/AshBuffer.h"
 #include "Ash/AshCRC32.h"
 #include "AshLogger/AshLoggerPassage.h"
 #include "AshLogger/AshLoggerTag.h"
@@ -218,39 +219,6 @@ namespace nearby::client
                         {
                             currentDiscoveredEndpointIterator.second->RenderDebugFrame();
 
-                            if (ImGui::Button("Try Decrypt"))
-                            {
-                                auto share = static_cast<NearbyDiscoveredEndpointBle*>(currentDiscoveredEndpointIterator.second)->GetAdvertisement()->GetShare();
-
-                                nearby_storage_decrypted_metadata_buffer* decrypted_metadata_buffer = NULL;
-
-                                bool res = nearby_storage_certificate_manager_try_decrypt_encrypted_metadata(m_CertificateManager, share->metadata_encryption_key_hash_byte,
-                                                                                                             sizeof(share->metadata_encryption_key_hash_byte), share->salt, sizeof(share->salt),
-                                                                                                             &decrypted_metadata_buffer);
-
-                                if (res)
-                                {
-                                    nearby_sharing_proto_Device parsedDevice = {};
-
-                                    pb_create_string_decode_callback(&parsedDevice.name);
-                                    pb_create_string_decode_callback(&parsedDevice.display_name);
-
-                                    pb_istream_t protoInputStream = pb_istream_from_buffer(decrypted_metadata_buffer->data, decrypted_metadata_buffer->length);
-                                    if (pb_decode(&protoInputStream, nearby_sharing_proto_Device_fields, &parsedDevice) == false)
-                                    {
-                                        m_Logger.Log("Error", "Failed to deserialize protobuf device.");
-                                    }
-
-                                    m_Logger.Log("Info", "Display Name: {}; Name: {}", pb_get_string_for_decode_callback(&parsedDevice.display_name),
-                                                 pb_get_string_for_decode_callback(&parsedDevice.name));
-
-                                    pb_destroy_string_decode_callback(&parsedDevice.display_name);
-                                    pb_destroy_string_decode_callback(&parsedDevice.name);
-
-                                    nearby_storage_decrypted_metadata_buffer_destroy(decrypted_metadata_buffer);
-                                }
-                            }
-
                             ImGui::TreePop();
                         }
                     }
@@ -323,8 +291,9 @@ namespace nearby::client
         std::this_thread::yield();
 
         NearbyDiscoveredAdvertisementBle* advertisementBle = new NearbyDiscoveredAdvertisementBle();
+        ash::AshBuffer advertisementBuffer = ash::AshBuffer(AdvertisementData, AdvertisementLength);
 
-        if (advertisementBle->Deserialize(AdvertisementData, AdvertisementLength))
+        if (advertisementBle->Deserialize(&advertisementBuffer))
         {
             NearbyDiscoveredEndpointBle* endpoint = nullptr;
 
@@ -336,9 +305,8 @@ namespace nearby::client
             }
             else
             {
-                endpoint = new NearbyDiscoveredEndpointBle(MacAddress, advertisementBle);
+                endpoint = new NearbyDiscoveredEndpointBle(MacAddress, advertisementBle, m_CertificateManager);
                 endpoint->SetReceivedLastLifeSign();
-
                 m_DiscoveredEndpoints.emplace(advertisementBle->GetEndpointId(), endpoint);
             }
         }

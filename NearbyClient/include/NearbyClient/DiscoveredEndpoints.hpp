@@ -1,8 +1,10 @@
 #ifndef _NEARBYCLIENT_DISCOVEREDENDPOINTS_HPP
 #define _NEARBYCLIENT_DISCOVEREDENDPOINTS_HPP
 
+#include "Ash/AshCRC32.h"
 #include "NearbyClient/DiscoveredAdvertisements.hpp"
 #include "NearbyClient/DiscoveredEndpointId.hpp"
+#include "NearbyStorage/CertificateManager.h"
 #include <chrono>
 
 namespace nearby::client
@@ -55,7 +57,7 @@ namespace nearby::client
     {
     public:
         //! @warning @param[in] Advertisement Is being consumed.
-        NearbyDiscoveredEndpointBle(unsigned char* MacAddress, NearbyDiscoveredAdvertisementBle* Advertisement);
+        NearbyDiscoveredEndpointBle(unsigned char* MacAddress, NearbyDiscoveredAdvertisementBle* Advertisement, nearby_storage_certificate_manager* CertificateManager);
         ~NearbyDiscoveredEndpointBle() override;
 
         void RenderDebugFrame() override;
@@ -78,6 +80,9 @@ namespace nearby::client
     private:
         unsigned char m_MacAddress[6];
         NearbyDiscoveredAdvertisementBle* m_Advertisement;
+        ash::AshCRC32Value m_LastAdvertisementHash;
+        nearby_storage_certificate_manager* m_CertificateManager;
+        bool m_ForceReevaluationOfNextAdvertisement;
     };
 
 } // namespace nearby::client
