@@ -35,7 +35,7 @@ int nearby_storage_aes_ctr_256_decrypt(unsigned char* encrypted_data, unsigned l
     mbedtls_aes_context aes;
     mbedtls_aes_init(&aes);
 
-    if (mbedtls_aes_setkey_dec(&aes, key, 256) != 0)
+    if (mbedtls_aes_setkey_enc(&aes, key, 256) != 0)
     {
         return -1;
     }
@@ -71,7 +71,6 @@ int nearby_storage_google_aead_aes_gcm_256_decrypt(unsigned char* encrypted_data
 
     if (mbedtls_gcm_auth_decrypt(&gcm, encrypted_length, iv, 12, aad, aad_length, tag, 16, encrypted_data, decrypted_data) != 0)
     {
-        printf("fail gcm dec\n");
         return -2;
     }
 

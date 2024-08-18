@@ -190,7 +190,6 @@ bool nearby_storage_certificate_manager_try_decrypt_encrypted_metadata_iter(stru
 
         if (foundPublicCertificate)
         {
-            printf("found\n");
             udata->public_certificate = public_certificate;
         }
 
