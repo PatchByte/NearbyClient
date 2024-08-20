@@ -1,5 +1,9 @@
 # NearbyClient
 
+## Important Note
+
+This is work in progress
+
 ## Bluez doesn't give you access to BLE Scanning?
 
 Do:
